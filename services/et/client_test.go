@@ -91,6 +91,7 @@ func TestClient_GetEtChannel(t *testing.T) {
 	ExpectEqual(t.Errorf, nil, err)
 	r, err := json.Marshal(result)
 	log.Debug(string(r))
+	fmt.Println(string(r))
 }
 
 // TestClient_RecommitEtChannel 测试客户端的RecommitEtChannel方法
@@ -107,7 +108,7 @@ func TestClient_RecommitEtChannel(t *testing.T) {
 			Networks:            []string{"Your Networks"},      // networks
 			CustomerAddress:     "Your CustomerAddress",         // customer address
 			RouteType:           "Your RouteType",               // route type
-			VlanId:              "1",                            // vlan id
+			VlanId:              10,                             // vlan id
 			Status:              "Your Status",                  // status
 			EnableIpv6:          0,                              // enable ipv6
 			BaiduIpv6Address:    "Your BaiduIpv6Address",        // baidu ipv6 address
@@ -190,6 +191,7 @@ func TestClient_CreateEtDcphy(t *testing.T) {
 		UserPhone:   "18266666666",
 		UserEmail:   "18266666666@baidu.com",
 		UserIdc:     "北京|市辖区|东城区|百度科技园K2",
+		LinkDelay:   100,
 	}
 
 	r, err := EtClient.CreateEtDcphy(args)
@@ -207,9 +209,10 @@ func TestClient_UpdateEtDcphy(t *testing.T) {
 		UserName:    "testUpdate",
 		UserPhone:   "18266666667",
 		UserEmail:   "18266666667@baidu.com",
+		LinkDelay:   69,
 	}
 
-	err := EtClient.UpdateEtDcphy("dcphy-23451", args)
+	err := EtClient.UpdateEtDcphy("dcphy-2222", args)
 	ExpectEqual(t.Errorf, nil, err)
 }
 

@@ -26,6 +26,7 @@ func CreateEtDcphy() {
 		UserPhone:   "Your Phone",          // 用户手机号码
 		UserEmail:   "Your Email",          // 用户邮箱
 		UserIdc:     "Your Idc",            // 对端地址
+		LinkDelay:   100,                   // 端口延迟down时间，单位ms
 		Tags: []et.Tag{{
 			TagKey:   "Your TagKey",
 			TagValue: "Your TagValue",

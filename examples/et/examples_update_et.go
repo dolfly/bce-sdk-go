@@ -20,6 +20,7 @@ func UpdateEtDcphy() {
 		UserName:    "Your name",           // 用户名称
 		UserPhone:   "Your Phone",          // 用户手机号码
 		UserEmail:   "Your Email",          // 用户邮箱
+		LinkDelay:   100,                   // 端口延迟down时间，单位ms
 	}
 
 	if err = client.UpdateEtDcphy("Your Et Id", args); err != nil {

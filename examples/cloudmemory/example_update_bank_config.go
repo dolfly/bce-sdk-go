@@ -1,0 +1,37 @@
+/*
+ * Copyright 2026 Baidu, Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file
+ * except in compliance with the License. You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software distributed under the
+ * License is distributed on an "AS IS" BASIS, WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND,
+ * either express or implied. See the License for the specific language governing
+ * permissions
+ * and limitations under the License.
+ */
+
+package cloudmemoryexamples
+
+import (
+	"context"
+	"fmt"
+
+	"github.com/baidubce/bce-sdk-go/services/cloudmemory/api"
+	hindsight "github.com/vectorize-io/hindsight/hindsight-clients/go"
+)
+
+func UpdateBankConfig() {
+	endpoint, apiKey := "Your endpoint", "Your apiKey"
+	client := cloudmemory.New(endpoint, apiKey)
+	update := hindsight.NewBankConfigUpdate(map[string]interface{}{
+		"auto_consolidate": true,
+	})
+	response, err := client.UpdateBankConfig(context.Background(), "your-bank-id", *update)
+	if err != nil {
+		panic(err)
+	}
+	fmt.Println(response)
+}

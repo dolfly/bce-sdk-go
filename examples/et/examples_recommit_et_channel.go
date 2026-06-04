@@ -26,7 +26,7 @@ func RecommitEtChannel() {
 			Networks:            []string{"Your Networks"},        // networks
 			CustomerAddress:     "Your CustomerAddress",           // customer address
 			RouteType:           "Your RouteType",                 // route type
-			VlanId:              "Your Vlan ID",                   // vlan id
+			VlanId:              10,                               // vlan id
 			Status:              "Your Status",                    // status
 			EnableIpv6:          0,                                // enable ipv6
 			BaiduIpv6Address:    "Your BaiduIpv6Address",          // baidu ipv6 address

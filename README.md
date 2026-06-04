@@ -56,6 +56,7 @@ bce-sdk-go
 |  |--cfc                 //函数计算
 |  |--cfs                 //CFS文件存储服务
 |  |--cfw                 //云防火墙
+|  |--cloudmemory         //云记忆服务
 |  |--csn                 //云智能网
 |  |--ddc                 //DDC数据库专属集群
 |  |--dts                 //数据传输服务
@@ -63,6 +64,7 @@ bce-sdk-go
 |  |--eip                 //弹性公网IP
 |  |--endpoint            //SNIC服务网卡
 |  |--eni                 //ENIC弹性网卡
+|  |--eo                  //边缘安全加速EO
 |  |--esg                 //企业安全组
 |  |--etGateway           //专线网关
 |  |--havip               //高可用虚拟IP
@@ -275,6 +277,7 @@ SSL证书服务 | CERT          | github.com/baidubce/bce-sdk-go/services/cert  
 容器镜像服务 企业版 | ECCR          | github.com/baidubce/bce-sdk-go/services/eccr           | [ECCR.md](./doc/ECCR.md)
 弹性公网IP | EIP           | github.com/baidubce/bce-sdk-go/services/eip            | [EIP.md](./doc/EIP.md)
 ENIC弹性网卡 | ENIC          | github.com/baidubce/bce-sdk-go/services/eni            | [ENIC.md](./doc/ENIC.md)
+边缘安全加速 | EO            | github.com/baidubce/bce-sdk-go/services/eo             | [EO.md](./doc/EO.md)
 企业安全组 | ESG           | github.com/baidubce/bce-sdk-go/services/esg            | [ESG.md](./doc/ESG.md)
 高可用虚拟IP | HAVIP         | github.com/baidubce/bce-sdk-go/services/havip          | [HAVIP.md](./doc/HAVIP.md)
 专线网关 | EtGateway     | github.com/baidubce/bce-sdk-go/services/etGateway      | [ETGateway.md](./doc/ETGateway.md)
