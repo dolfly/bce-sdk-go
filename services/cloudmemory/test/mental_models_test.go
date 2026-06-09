@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/baidubce/bce-sdk-go/services/cloudmemory/api"
-	hindsight "github.com/vectorize-io/hindsight/hindsight-clients/go"
 )
 
 const testMentalModelName = "bce-sdk-it-mm"
@@ -21,7 +20,7 @@ func TestMentalModelsLifecycle(t *testing.T) {
 	var modelID string
 
 	t.Run("CreateMentalModel", func(t *testing.T) {
-		req := hindsight.NewCreateMentalModelRequest(testMentalModelName, "what do you remember?")
+		req := cloudmemory.NewCreateMentalModelRequest(testMentalModelName, "what do you remember?")
 		out, err := c.CreateMentalModel(ctx(t), bankID(), *req)
 		if err != nil {
 			t.Fatalf("CreateMentalModel: %v", err)
@@ -53,7 +52,7 @@ func TestMentalModelsLifecycle(t *testing.T) {
 	})
 
 	t.Run("UpdateMentalModel", func(t *testing.T) {
-		req := hindsight.NewUpdateMentalModelRequest()
+		req := cloudmemory.NewUpdateMentalModelRequest()
 		req.SetSourceQuery("what do you remember now?")
 		out, err := c.UpdateMentalModel(ctx(t), bankID(), modelID, *req)
 		if err != nil {

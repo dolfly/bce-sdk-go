@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/baidubce/bce-sdk-go/services/cloudmemory/api"
-	hindsight "github.com/vectorize-io/hindsight/hindsight-clients/go"
 )
 
 // TestDirectivesLifecycle exercises every directive endpoint
@@ -19,7 +18,7 @@ func TestDirectivesLifecycle(t *testing.T) {
 	var directiveID string
 
 	t.Run("CreateDirective", func(t *testing.T) {
-		req := hindsight.NewCreateDirectiveRequest("bce-sdk-it-directive", "always be concise")
+		req := cloudmemory.NewCreateDirectiveRequest("bce-sdk-it-directive", "always be concise")
 		out, err := c.CreateDirective(ctx(t), bankID(), *req)
 		if err != nil {
 			t.Fatalf("CreateDirective: %v", err)
@@ -51,7 +50,7 @@ func TestDirectivesLifecycle(t *testing.T) {
 	})
 
 	t.Run("UpdateDirective", func(t *testing.T) {
-		req := hindsight.NewUpdateDirectiveRequest()
+		req := cloudmemory.NewUpdateDirectiveRequest()
 		out, err := c.UpdateDirective(ctx(t), bankID(), directiveID, *req)
 		if err != nil {
 			t.Fatalf("UpdateDirective: %v", err)

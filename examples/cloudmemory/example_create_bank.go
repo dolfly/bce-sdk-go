@@ -20,14 +20,13 @@ import (
 	"fmt"
 
 	"github.com/baidubce/bce-sdk-go/services/cloudmemory/api"
-	hindsight "github.com/vectorize-io/hindsight/hindsight-clients/go"
 )
 
 func CreateBank() {
 	endpoint, apiKey := "Your endpoint", "Your apiKey"
 	client := cloudmemory.New(endpoint, apiKey)
 	bankID := "your-bank-id"
-	req := hindsight.NewCreateBankRequest() // 创建/更新 Bank 请求体
+	req := cloudmemory.NewCreateBankRequest() // 创建/更新 Bank 请求体
 	response, err := client.CreateBank(context.Background(), bankID, *req)
 	if err != nil {
 		panic(err)

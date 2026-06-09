@@ -20,13 +20,12 @@ import (
 	"fmt"
 
 	"github.com/baidubce/bce-sdk-go/services/cloudmemory/api"
-	hindsight "github.com/vectorize-io/hindsight/hindsight-clients/go"
 )
 
 func UpdateBankConfig() {
 	endpoint, apiKey := "Your endpoint", "Your apiKey"
 	client := cloudmemory.New(endpoint, apiKey)
-	update := hindsight.NewBankConfigUpdate(map[string]interface{}{
+	update := cloudmemory.NewBankConfigUpdate(map[string]interface{}{
 		"auto_consolidate": true,
 	})
 	response, err := client.UpdateBankConfig(context.Background(), "your-bank-id", *update)

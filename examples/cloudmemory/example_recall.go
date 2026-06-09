@@ -20,13 +20,12 @@ import (
 	"fmt"
 
 	"github.com/baidubce/bce-sdk-go/services/cloudmemory/api"
-	hindsight "github.com/vectorize-io/hindsight/hindsight-clients/go"
 )
 
 func Recall() {
 	endpoint, apiKey := "Your endpoint", "Your apiKey"
 	client := cloudmemory.New(endpoint, apiKey)
-	req := hindsight.NewRecallRequest("hello") // 检索关键词
+	req := cloudmemory.NewRecallRequest("hello") // 检索关键词
 	response, err := client.Recall(context.Background(), "your-bank-id", *req)
 	if err != nil {
 		panic(err)

@@ -20,13 +20,12 @@ import (
 	"fmt"
 
 	"github.com/baidubce/bce-sdk-go/services/cloudmemory/api"
-	hindsight "github.com/vectorize-io/hindsight/hindsight-clients/go"
 )
 
 func UpdateDirective() {
 	endpoint, apiKey := "Your endpoint", "Your apiKey"
 	client := cloudmemory.New(endpoint, apiKey)
-	req := hindsight.NewUpdateDirectiveRequest()
+	req := cloudmemory.NewUpdateDirectiveRequest()
 	req.SetContent("Be concise but complete.")
 	response, err := client.UpdateDirective(context.Background(), "your-bank-id", "your-directive-id", *req)
 	if err != nil {

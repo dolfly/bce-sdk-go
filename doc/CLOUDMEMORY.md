@@ -2,7 +2,7 @@
 
 # 概述
 
-本文档主要介绍 CloudMemory（云端记忆）GO SDK 的使用。CloudMemory 是基于向量数据库 VectorDB 提供的长期记忆服务，可用于为大模型应用提供持久化的记忆读写、心智模型、指令、文档与实体关系等能力。SDK 在开源 [Hindsight Go Client](https://github.com/vectorize-io/hindsight)（MIT License）之上做了一层简化封装，对外暴露与 [接口速查表](https://cloud.baidu.com/doc/VDB/s/cmpl4uayz) 完全对齐的 API。
+本文档主要介绍 CloudMemory（云端记忆）GO SDK 的使用。CloudMemory 是基于向量数据库 VectorDB 提供的长期记忆服务，可用于为大模型应用提供持久化的记忆读写、心智模型、指令、文档与实体关系等能力。对外暴露与 [接口速查表](https://cloud.baidu.com/doc/VDB/s/cmpl4uayz) 完全对齐的 API。
 
 > 注意：CloudMemory 的鉴权方式不同于其它 BCE 服务，**不使用 AK/SK 签名**，而是通过 HTTP Bearer Token（API Key）进行认证。
 
@@ -62,41 +62,7 @@ client := cloudmemory.NewWithTimeout(endpoint, apiKey, 60*time.Second)
 
 传入 `0` 表示禁用超时（不推荐）。
 
-### 复用已有的 hindsight.APIClient
-
-若已存在一个配置好的 `*hindsight.APIClient`（例如自定义了 Transport 或拦截器），可以直接复用：
-
-```go
-import (
-    "github.com/baidubce/bce-sdk-go/services/cloudmemory/api"
-    hindsight "github.com/vectorize-io/hindsight/hindsight-clients/go"
-)
-
-raw := hindsight.NewAPIClientWithToken(endpoint, apiKey)
-// raw.GetConfig().HTTPClient = customHTTPClient // 可选：自定义底层 http.Client
-client := cloudmemory.NewFromAPIClient(raw)
 ```
-
-### 访问底层 hindsight 客户端
-
-封装层只暴露速查表中的端点。如需调用未被封装的高级特性（builder 选项、原始响应、流式 API 等），通过 `Underlying()` 拿到底层 `*hindsight.APIClient`：
-
-```go
-api := client.Underlying().BanksAPI.ListBanks(context.Background())
-out, httpResp, err := api.Execute()
-_ = httpResp // 完整的 *http.Response，含 status、header
-_, _ = out, err
-```
-
-## 引用类型
-
-请求体类型来自 hindsight 包，使用以下别名引入：
-
-```go
-import hindsight "github.com/vectorize-io/hindsight/hindsight-clients/go"
-```
-
-下文中的 `hindsight.NewXxxRequest(...)` 等构造器即来自该包。
 
 # 系统检查
 
@@ -145,9 +111,7 @@ fmt.Println(resp.Items)
 `POST /banks`，按 `bankID` 幂等创建。
 
 ```go
-import hindsight "github.com/vectorize-io/hindsight/hindsight-clients/go"
-
-req := hindsight.NewCreateBankRequest()
+req := cloudmemory.NewCreateBankRequest()
 // 可选：req.SetName("user-bank") 等
 
 resp, err := client.CreateBank(context.Background(), "your-bank-id", *req)
@@ -194,7 +158,7 @@ if err != nil {
 fmt.Println(cfg)
 
 // 更新
-update := *hindsight.NewBankConfigUpdate(map[string]interface{}{
+update := *cloudmemory.NewBankConfigUpdate(map[string]interface{}{
     "auto_consolidate": true,
 })
 out, err := client.UpdateBankConfig(context.Background(), "your-bank-id", update)
@@ -235,11 +199,11 @@ fmt.Println(resp)
 `POST /memories/retain`，请求中 `items` 至少包含一项。
 
 ```go
-items := []hindsight.MemoryItem{
-    *hindsight.NewMemoryItem("用户喜欢简洁的回答"),
-    *hindsight.NewMemoryItem("用户使用 Go 1.21"),
+items := []cloudmemory.MemoryItem{
+    *cloudmemory.NewMemoryItem("用户喜欢简洁的回答"),
+    *cloudmemory.NewMemoryItem("用户使用 Go 1.21"),
 }
-req := hindsight.NewRetainRequest(items)
+req := cloudmemory.NewRetainRequest(items)
 
 resp, err := client.Retain(context.Background(), "your-bank-id", *req)
 if err != nil {
@@ -286,7 +250,7 @@ fmt.Println(resp.OperationIds)
 `POST /recall`
 
 ```go
-req := hindsight.NewRecallRequest("用户的编程语言偏好是什么？")
+req := cloudmemory.NewRecallRequest("用户的编程语言偏好是什么？")
 resp, err := client.Recall(context.Background(), "your-bank-id", *req)
 if err != nil {
     panic(err)
@@ -299,7 +263,7 @@ fmt.Println(resp)
 `POST /reflect`，由服务端调用 LLM 综合现有记忆给出答案。**该接口耗时较长**（一般在数十秒级别），建议把 Client 的超时和上下文超时都设置为 2 分钟以上。
 
 ```go
-req := hindsight.NewReflectRequest("总结一下你对用户的了解")
+req := cloudmemory.NewReflectRequest("总结一下你对用户的了解")
 resp, err := client.Reflect(context.Background(), "your-bank-id", *req)
 if err != nil {
     panic(err)
@@ -368,7 +332,7 @@ fmt.Println(resp)
 `PATCH /documents/{documentId}`。请求体**至少包含一个待更新字段**，否则服务端会返回 422。
 
 ```go
-req := hindsight.NewUpdateDocumentRequest()
+req := cloudmemory.NewUpdateDocumentRequest()
 req.SetTags([]string{"important", "reviewed"})
 
 resp, err := client.UpdateDocument(context.Background(), "your-bank-id", "your-document-id", *req)
@@ -493,7 +457,7 @@ fmt.Println(resp.Items)
 `POST /banks/{bankId}/mental-models`，需要传入 `name` 和 `sourceQuery`。
 
 ```go
-req := hindsight.NewCreateMentalModelRequest("user-profile", "what do you remember about the user?")
+req := cloudmemory.NewCreateMentalModelRequest("user-profile", "what do you remember about the user?")
 resp, err := client.CreateMentalModel(context.Background(), "your-bank-id", *req)
 if err != nil {
     panic(err)
@@ -519,7 +483,7 @@ fmt.Println(resp)
 `PATCH /banks/{bankId}/mental-models/{modelId}`。请求体**至少包含一个待更新字段**，否则服务端返回 404/422。
 
 ```go
-req := hindsight.NewUpdateMentalModelRequest()
+req := cloudmemory.NewUpdateMentalModelRequest()
 req.SetSourceQuery("what does the user prefer?")
 
 resp, err := client.UpdateMentalModel(context.Background(), "your-bank-id", "your-model-id", *req)
@@ -581,7 +545,7 @@ fmt.Println(resp.Items)
 `POST /banks/{bankId}/directives`，必填 `name` 与 `content`。
 
 ```go
-req := hindsight.NewCreateDirectiveRequest("be-concise", "Always answer concisely and avoid filler.")
+req := cloudmemory.NewCreateDirectiveRequest("be-concise", "Always answer concisely and avoid filler.")
 resp, err := client.CreateDirective(context.Background(), "your-bank-id", *req)
 if err != nil {
     panic(err)
@@ -606,7 +570,7 @@ fmt.Println(resp)
 `PATCH /banks/{bankId}/directives/{directiveId}`
 
 ```go
-req := hindsight.NewUpdateDirectiveRequest()
+req := cloudmemory.NewUpdateDirectiveRequest()
 req.SetContent("Be concise but complete.")
 
 resp, err := client.UpdateDirective(context.Background(), "your-bank-id", "your-directive-id", *req)
@@ -679,7 +643,3 @@ fmt.Println(resp)
 - `404 Not Found` — Bank / 文档 / 模型 / 指令 ID 不存在；或 PATCH 请求体为空导致路由不匹配。
 - `422 Unprocessable Entity` — 请求体校验失败，例如 `BankConfigUpdate.Updates` 为 `nil`、或 `UpdateDocumentRequest` 没有任何字段。
 - `context deadline exceeded` — 请求超时。`Reflect`、`RefreshMentalModel` 等接口由服务端调用 LLM，建议把 client 与 ctx 超时都放宽到 2 分钟以上。
-
-# 开源协议
-
-CloudMemory Go SDK 在开源项目 [Hindsight](https://github.com/vectorize-io/hindsight)（MIT License, Copyright 2025 Vectorize AI, Inc.）基础上做封装。原始 LICENSE 文件保留在 `services/cloudmemory/api/LICENSE` 中，每个封装源文件顶部均带有 `Based on Hindsight Go Client - MIT License` 声明。

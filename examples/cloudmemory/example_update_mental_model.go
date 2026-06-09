@@ -20,13 +20,12 @@ import (
 	"fmt"
 
 	"github.com/baidubce/bce-sdk-go/services/cloudmemory/api"
-	hindsight "github.com/vectorize-io/hindsight/hindsight-clients/go"
 )
 
 func UpdateMentalModel() {
 	endpoint, apiKey := "Your endpoint", "Your apiKey"
 	client := cloudmemory.New(endpoint, apiKey)
-	req := hindsight.NewUpdateMentalModelRequest()
+	req := cloudmemory.NewUpdateMentalModelRequest()
 	req.SetSourceQuery("updated query")
 	response, err := client.UpdateMentalModel(context.Background(), "your-bank-id", "your-model-id", *req)
 	if err != nil {

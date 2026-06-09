@@ -6,7 +6,7 @@ package cloudmemory_test
 import (
 	"testing"
 
-	hindsight "github.com/vectorize-io/hindsight/hindsight-clients/go"
+	"github.com/baidubce/bce-sdk-go/services/cloudmemory/api"
 )
 
 // TestBanksLifecycle exercises every Bank endpoint as an ordered sub-test
@@ -17,7 +17,7 @@ func TestBanksLifecycle(t *testing.T) {
 	id := bankID()
 
 	t.Run("CreateBank", func(t *testing.T) {
-		req := hindsight.NewCreateBankRequest()
+		req := cloudmemory.NewCreateBankRequest()
 		out, err := c.CreateBank(ctx(t), id, *req)
 		if err != nil {
 			t.Fatalf("CreateBank: %v", err)
@@ -58,7 +58,7 @@ func TestBanksLifecycle(t *testing.T) {
 	})
 
 	t.Run("UpdateBankConfig", func(t *testing.T) {
-		update := *hindsight.NewBankConfigUpdate(map[string]interface{}{})
+		update := *cloudmemory.NewBankConfigUpdate(map[string]interface{}{})
 		out, err := c.UpdateBankConfig(ctx(t), id, update)
 		if err != nil {
 			t.Fatalf("UpdateBankConfig: %v", err)

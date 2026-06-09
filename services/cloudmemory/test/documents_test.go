@@ -8,7 +8,6 @@ import (
 	"testing"
 
 	"github.com/baidubce/bce-sdk-go/services/cloudmemory/api"
-	hindsight "github.com/vectorize-io/hindsight/hindsight-clients/go"
 )
 
 // pickFirstDocumentID returns a document id from the bank, or skips the
@@ -54,7 +53,7 @@ func TestUpdateDocument(t *testing.T) {
 	c := newClient(t)
 	ensureBank(t, c)
 	docID := pickFirstDocumentID(t, c)
-	req := hindsight.NewUpdateDocumentRequest()
+	req := cloudmemory.NewUpdateDocumentRequest()
 	req.SetTags([]string{"bce-sdk-it"})
 	out, err := c.UpdateDocument(ctx(t), bankID(), docID, *req)
 	if err != nil {

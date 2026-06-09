@@ -7,7 +7,6 @@ import (
 	"testing"
 
 	"github.com/baidubce/bce-sdk-go/services/cloudmemory/api"
-	hindsight "github.com/vectorize-io/hindsight/hindsight-clients/go"
 )
 
 // ensureBank creates the integration bank if it does not exist.
@@ -16,7 +15,7 @@ func ensureBank(t *testing.T, c *cloudmemory.Client) {
 	if _, err := c.GetBank(ctx(t), bankID()); err == nil {
 		return
 	}
-	req := hindsight.NewCreateBankRequest()
+	req := cloudmemory.NewCreateBankRequest()
 	if _, err := c.CreateBank(ctx(t), bankID(), *req); err != nil {
 		t.Fatalf("ensureBank: %v", err)
 	}
@@ -25,8 +24,8 @@ func ensureBank(t *testing.T, c *cloudmemory.Client) {
 func TestRetain(t *testing.T) {
 	c := newClient(t)
 	ensureBank(t, c)
-	items := []hindsight.MemoryItem{*hindsight.NewMemoryItem("hello from bce-sdk integration test")}
-	req := hindsight.NewRetainRequest(items)
+	items := []cloudmemory.MemoryItem{*cloudmemory.NewMemoryItem("hello from bce-sdk integration test")}
+	req := cloudmemory.NewRetainRequest(items)
 	out, err := c.Retain(ctx(t), bankID(), *req)
 	if err != nil {
 		t.Fatalf("Retain: %v", err)
@@ -37,8 +36,8 @@ func TestRetain(t *testing.T) {
 func TestRetainAsync(t *testing.T) {
 	c := newClient(t)
 	ensureBank(t, c)
-	items := []hindsight.MemoryItem{*hindsight.NewMemoryItem("hello async")}
-	req := hindsight.NewRetainRequest(items)
+	items := []cloudmemory.MemoryItem{*cloudmemory.NewMemoryItem("hello async")}
+	req := cloudmemory.NewRetainRequest(items)
 	out, err := c.RetainAsync(ctx(t), bankID(), *req)
 	if err != nil {
 		t.Fatalf("RetainAsync: %v", err)
@@ -49,7 +48,7 @@ func TestRetainAsync(t *testing.T) {
 func TestRecall(t *testing.T) {
 	c := newClient(t)
 	ensureBank(t, c)
-	req := hindsight.NewRecallRequest("hello")
+	req := cloudmemory.NewRecallRequest("hello")
 	out, err := c.Recall(ctx(t), bankID(), *req)
 	if err != nil {
 		t.Fatalf("Recall: %v", err)
@@ -60,7 +59,7 @@ func TestRecall(t *testing.T) {
 func TestReflect(t *testing.T) {
 	c := newClient(t)
 	ensureBank(t, c)
-	req := hindsight.NewReflectRequest("what do you remember?")
+	req := cloudmemory.NewReflectRequest("what do you remember?")
 	out, err := c.Reflect(ctx(t), bankID(), *req)
 	if err != nil {
 		t.Fatalf("Reflect: %v", err)

@@ -20,13 +20,12 @@ import (
 	"fmt"
 
 	"github.com/baidubce/bce-sdk-go/services/cloudmemory/api"
-	hindsight "github.com/vectorize-io/hindsight/hindsight-clients/go"
 )
 
 func CreateMentalModel() {
 	endpoint, apiKey := "Your endpoint", "Your apiKey"
 	client := cloudmemory.New(endpoint, apiKey)
-	req := hindsight.NewCreateMentalModelRequest("user-profile", "what do you remember about the user?")
+	req := cloudmemory.NewCreateMentalModelRequest("user-profile", "what do you remember about the user?")
 	response, err := client.CreateMentalModel(context.Background(), "your-bank-id", *req)
 	if err != nil {
 		panic(err)

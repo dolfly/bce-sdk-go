@@ -20,13 +20,12 @@ import (
 	"fmt"
 
 	"github.com/baidubce/bce-sdk-go/services/cloudmemory/api"
-	hindsight "github.com/vectorize-io/hindsight/hindsight-clients/go"
 )
 
 func UpdateDocument() {
 	endpoint, apiKey := "Your endpoint", "Your apiKey"
 	client := cloudmemory.New(endpoint, apiKey)
-	req := hindsight.NewUpdateDocumentRequest()
+	req := cloudmemory.NewUpdateDocumentRequest()
 	req.SetTags([]string{"tag-a", "tag-b"})
 	response, err := client.UpdateDocument(context.Background(), "your-bank-id", "your-document-id", *req)
 	if err != nil {

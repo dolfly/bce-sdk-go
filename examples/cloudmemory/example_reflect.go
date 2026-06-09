@@ -20,13 +20,12 @@ import (
 	"fmt"
 
 	"github.com/baidubce/bce-sdk-go/services/cloudmemory/api"
-	hindsight "github.com/vectorize-io/hindsight/hindsight-clients/go"
 )
 
 func Reflect() {
 	endpoint, apiKey := "Your endpoint", "Your apiKey"
 	client := cloudmemory.New(endpoint, apiKey)
-	req := hindsight.NewReflectRequest("what do you remember about me?")
+	req := cloudmemory.NewReflectRequest("what do you remember about me?")
 	response, err := client.Reflect(context.Background(), "your-bank-id", *req) // 综合记忆生成回答
 	if err != nil {
 		panic(err)

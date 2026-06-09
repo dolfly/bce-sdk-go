@@ -20,14 +20,13 @@ import (
 	"fmt"
 
 	"github.com/baidubce/bce-sdk-go/services/cloudmemory/api"
-	hindsight "github.com/vectorize-io/hindsight/hindsight-clients/go"
 )
 
 func Retain() {
 	endpoint, apiKey := "Your endpoint", "Your apiKey"
 	client := cloudmemory.New(endpoint, apiKey)
-	items := []hindsight.MemoryItem{*hindsight.NewMemoryItem("hello from bce-sdk")}
-	req := hindsight.NewRetainRequest(items)
+	items := []cloudmemory.MemoryItem{*cloudmemory.NewMemoryItem("hello from bce-sdk")}
+	req := cloudmemory.NewRetainRequest(items)
 	response, err := client.Retain(context.Background(), "your-bank-id", *req) // 同步存储记忆
 	if err != nil {
 		panic(err)
