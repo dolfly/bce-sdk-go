@@ -960,6 +960,22 @@ func TestDeleteNatGateway(t *testing.T) {
 	ExpectEqual(t.Errorf, nil, err)
 }
 
+func TestUpdateNatReleaseProtectionSwitch(t *testing.T) {
+	args := &UpdateNatReleaseProtectionSwitchArgs{
+		DeleteProtect: true,
+	}
+	err := VPC_CLIENT.UpdateNatReleaseProtectionSwitch(NatID, args)
+	ExpectEqual(t.Errorf, nil, err)
+
+	detail, err := VPC_CLIENT.GetNatGatewayDetail(NatID)
+	ExpectEqual(t.Errorf, nil, err)
+	ExpectEqual(t.Errorf, true, detail.DeleteProtect)
+
+	args.DeleteProtect = false
+	err = VPC_CLIENT.UpdateNatReleaseProtectionSwitch(NatID, args)
+	ExpectEqual(t.Errorf, nil, err)
+}
+
 func TestDeleteAclRule(t *testing.T) {
 	err := VPC_CLIENT.DeleteAclRule(AclRuleID, getClientToken())
 	ExpectEqual(t.Errorf, nil, err)

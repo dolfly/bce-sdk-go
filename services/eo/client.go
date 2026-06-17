@@ -196,3 +196,28 @@ func (cli *Client) GetStatSumByGroup(queryData *api.StatSumByGroupQueryData) (ap
 func (cli *Client) GetStatTopByGroup(queryData *api.StatTopByGroupQueryData) (api.StatResult, error) {
 	return api.GetStatTopByGroup(cli, queryData)
 }
+
+// SetSiteConfig - set the site configurations
+//
+// PARAMS:
+//   - site: the site to be configured
+//   - config: the configurations to be set;
+//
+// RETURNS:
+//   - *api.SiteConfigUpdateResult: the update status returned by the server
+//   - error: nil if success otherwise the specific error
+func (cli *Client) SetSiteConfig(site string, config *api.SiteConfig) (*api.SiteConfigUpdateResult, error) {
+	return api.SetSiteConfig(cli, site, config)
+}
+
+// GetSiteConfig - get the site configurations
+//
+// PARAMS:
+//   - site: the site to be queried
+//
+// RETURNS:
+//   - *api.SiteConfig: the configurations of the site
+//   - error: nil if success otherwise the specific error
+func (cli *Client) GetSiteConfig(site string) (*api.SiteConfig, error) {
+	return api.GetSiteConfig(cli, site)
+}

@@ -516,6 +516,7 @@ type NAT struct {
 	PaymentTiming string            `json:"paymentTiming"`
 	ExpiredTime   string            `json:"expiredTime"`
 	Tags          []model.TagModel  `json:"tags"`
+	DeleteProtect bool              `json:"deleteProtect"`
 	IpVersion     *string           `json:"ipVersion,omitempty"`
 	SessionConfig *NatSessionConfig `json:"sessionConfig,omitempty"`
 }
@@ -562,6 +563,12 @@ type DnatRule struct {
 type UpdateNatGatewayArgs struct {
 	ClientToken string `json:"-"`
 	Name        string `json:"name"`
+}
+
+// UpdateNatReleaseProtectionSwitchArgs defines the structure of the input parameters for UpdateNatReleaseProtectionSwitch api
+type UpdateNatReleaseProtectionSwitchArgs struct {
+	ClientToken   string `json:"-"`
+	DeleteProtect bool   `json:"deleteProtect"`
 }
 
 // BindEipsArgs defines the structure of the input parameters for the BindEips api

@@ -61,6 +61,10 @@ func getInstanceUrlWithId(instanceId string) string {
 	return INSTANCE_URL_V1 + "/" + instanceId
 }
 
+func getWhiteListUrlWithInstanceId(instanceId string) string {
+	return getInstanceUrlWithId(instanceId) + "/whitelist"
+}
+
 // List Security Group By Vpc URL
 func getSecurityGroupWithVpcIdUrl(vpcId string) string {
 	return URI_PREFIX_V2 + REQUEST_SECURITYGROUP_URL + "/vpc/" + vpcId
@@ -68,7 +72,7 @@ func getSecurityGroupWithVpcIdUrl(vpcId string) string {
 
 // List Security Group By Instance URL
 func getSecurityGroupWithInstanceIdUrl(instanceId string) string {
-	return URI_PREFIX_V2 + REQUEST_SECURITYGROUP_URL + "/instance/" + instanceId
+	return INSTANCE_URL_V1 + "/" + instanceId + "/securityGroup"
 }
 
 // Bind Security Group To Instance URL
@@ -106,6 +110,10 @@ func getRenewUrl() string {
 	return INSTANCE_URL_V2 + "/renew"
 }
 
+func getBackupUrlWithInstanceId(instanceId string) string {
+	return INSTANCE_URL_V1 + "/" + instanceId + "/backup"
+}
+
 func getLogsUrlWithInstanceId(instanceId string) string {
 	return INSTANCE_URL_V1 + "/" + instanceId + "/log"
 }
@@ -119,6 +127,10 @@ func getGroupUrl() string {
 }
 func getTemplateUrl() string {
 	return "/v2/template"
+}
+
+func getSyncGroupUrl() string {
+	return URI_PREFIX_V1 + "/syncGroup"
 }
 
 func Json(v interface{}) string {
@@ -210,6 +222,8 @@ func (c *Client) ListInstances(args *ListInstancesArgs) (*ListInstancesResult, e
 		WithURL(INSTANCE_URL_V2).
 		WithQueryParamFilter("marker", args.Marker).
 		WithQueryParamFilter("maxKeys", strconv.Itoa(args.MaxKeys)).
+		WithQueryParamFilter("instanceIds", args.InstanceIds).
+		WithQueryParamFilter("vnetIp", args.VnetIp).
 		WithResult(result).
 		Do()
 
@@ -632,6 +646,75 @@ func (c *Client) DeleteSecurityIp(instanceId string, args *SecurityIpArgs) error
 		Do()
 }
 
+// GetWhiteListGroup - get white list groups of a specified instance
+//
+// PARAMS:
+//   - instanceId: id of the instance
+//   - groupName: name of the white list group
+//
+// RETURNS:
+//   - *WhiteListGroupResult: result of the white list groups
+//   - error: nil if success otherwise the specific error
+func (c *Client) GetWhiteListGroup(instanceId, groupName string) (*WhiteListGroupResult, error) {
+	result := &WhiteListGroupResult{}
+	err := bce.NewRequestBuilder(c).
+		WithMethod(http.GET).
+		WithURL(getWhiteListUrlWithInstanceId(instanceId)).
+		WithQueryParamFilter("groupName", groupName).
+		WithResult(result).
+		Do()
+
+	return result, err
+}
+
+// CreateWhiteListGroup - create a white list group of a specified instance
+//
+// PARAMS:
+//   - instanceId: id of the instance
+//   - args: the arguments to create white list group
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) CreateWhiteListGroup(instanceId string, args *WhiteListGroupArgs) error {
+	return bce.NewRequestBuilder(c).
+		WithMethod(http.POST).
+		WithURL(getWhiteListUrlWithInstanceId(instanceId)).
+		WithBody(args).
+		Do()
+}
+
+// ModifyWhiteListGroup - modify a white list group of a specified instance
+//
+// PARAMS:
+//   - instanceId: id of the instance
+//   - args: the arguments to modify white list group
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) ModifyWhiteListGroup(instanceId string, args *WhiteListGroupArgs) error {
+	return bce.NewRequestBuilder(c).
+		WithMethod(http.PUT).
+		WithURL(getWhiteListUrlWithInstanceId(instanceId)).
+		WithBody(args).
+		Do()
+}
+
+// DeleteWhiteListGroup - delete a white list group of a specified instance
+//
+// PARAMS:
+//   - instanceId: id of the instance
+//   - groupName: name of the white list group
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) DeleteWhiteListGroup(instanceId, groupName string) error {
+	return bce.NewRequestBuilder(c).
+		WithMethod(http.DELETE).
+		WithURL(getWhiteListUrlWithInstanceId(instanceId)).
+		WithQueryParamFilter("groupName", groupName).
+		Do()
+}
+
 // ModifyPassword - modify the password of a specified instance
 //
 // PARAMS:
@@ -747,7 +830,93 @@ func (c *Client) GetBackupList(instanceId string) (*GetBackupListResult, error) 
 	result := &GetBackupListResult{}
 	err := bce.NewRequestBuilder(c).
 		WithMethod(http.GET).
-		WithURL(INSTANCE_URL_V1 + "/" + instanceId + "/backup").
+		WithURL(getBackupUrlWithInstanceId(instanceId)).
+		WithResult(result).
+		Do()
+
+	return result, err
+}
+
+// GetBackupPolicy - get backup policy of the instance
+//
+// PARAMS:
+//   - instanceId: id of the instance
+//
+// RETURNS:
+//   - *BackupPolicyResult: result of the backup policy
+//   - error: nil if success otherwise the specific error
+func (c *Client) GetBackupPolicy(instanceId string) (*BackupPolicyResult, error) {
+	result := &BackupPolicyResult{}
+	err := bce.NewRequestBuilder(c).
+		WithMethod(http.GET).
+		WithURL(getBackupUrlWithInstanceId(instanceId) + "/policy").
+		WithResult(result).
+		Do()
+
+	return result, err
+}
+
+// CreateBackup - create a manual backup of the instance
+//
+// PARAMS:
+//   - instanceId: id of the instance
+//   - args: the arguments to create manual backup
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) CreateBackup(instanceId string, args *BackupCommentArgs) error {
+	return bce.NewRequestBuilder(c).
+		WithMethod(http.POST).
+		WithURL(getBackupUrlWithInstanceId(instanceId)).
+		WithBody(args).
+		Do()
+}
+
+// DeleteBackup - delete a manual backup of the instance
+//
+// PARAMS:
+//   - instanceId: id of the instance
+//   - batchId: id of the manual backup batch
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) DeleteBackup(instanceId, batchId string) error {
+	return bce.NewRequestBuilder(c).
+		WithMethod(http.DELETE).
+		WithURL(getBackupUrlWithInstanceId(instanceId) + "/" + batchId).
+		Do()
+}
+
+// ModifyBackupComment - modify comment of a backup
+//
+// PARAMS:
+//   - instanceId: id of the instance
+//   - batchId: id of the backup batch
+//   - args: the arguments to modify backup comment
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) ModifyBackupComment(instanceId, batchId string, args *BackupCommentArgs) error {
+	return bce.NewRequestBuilder(c).
+		WithMethod(http.PUT).
+		WithURL(getBackupUrlWithInstanceId(instanceId) + "/" + batchId + "/comment").
+		WithBody(args).
+		Do()
+}
+
+// GetBackupUsage - get backup usage of the instance
+//
+// PARAMS:
+//   - instanceId: id of the instance
+//
+// RETURNS:
+//   - *BackupUsageResult: result of backup usage
+//   - error: nil if success otherwise the specific error
+func (c *Client) GetBackupUsage(instanceId string) (*BackupUsageResult, error) {
+	result := &BackupUsageResult{}
+	err := bce.NewRequestBuilder(c).
+		WithMethod(http.GET).
+		WithURL(getBackupUrlWithInstanceId(instanceId) + "/usage").
 		WithResult(result).
 		Do()
 
@@ -769,7 +938,7 @@ func (c *Client) GetBackupDetail(instanceId, backupRecordId string) (*GetBackupD
 	result := &GetBackupDetailResult{}
 	err := bce.NewRequestBuilder(c).
 		WithMethod(http.GET).
-		WithURL(INSTANCE_URL_V1 + "/" + instanceId + "/backup/" + backupRecordId).
+		WithURL(INSTANCE_URL_V1 + "/" + instanceId + "/backup/" + backupRecordId + "/url").
 		WithResult(result).
 		Do()
 
@@ -1101,7 +1270,7 @@ func (c *Client) GetMaintainTime(instanceId string) (*GetMaintainTimeResult, err
 	result := &GetMaintainTimeResult{}
 	err := bce.NewRequestBuilder(c).
 		WithMethod(http.GET).
-		WithURL(getInstanceUrlWithId(instanceId)+"/maintainTime").
+		WithURL(getInstanceUrlWithId(instanceId)+"/timeWindow").
 		WithHeader(http.CONTENT_TYPE, bce.DEFAULT_CONTENT_TYPE).
 		WithResult(result).
 		Do()
@@ -1124,7 +1293,7 @@ func (c *Client) ModifyMaintainTime(instanceId string, args *MaintainTime) error
 	}
 	err := bce.NewRequestBuilder(c).
 		WithMethod(http.PUT).
-		WithURL(getInstanceUrlWithId(instanceId)+"/maintainTime").
+		WithURL(getInstanceUrlWithId(instanceId)+"/timeWindow").
 		WithHeader(http.CONTENT_TYPE, bce.DEFAULT_CONTENT_TYPE).
 		WithBody(args).
 		Do()
@@ -1629,4 +1798,490 @@ func (c *Client) GetApplyRecords(templateId string, marker *Marker) (*GetApplyRe
 		WithResult(result).
 		Do()
 	return result, err
+}
+
+// SyncGroupPreCheck - pre-check for creating a sync group
+//
+// PARAMS:
+//   - args: the arguments to pre-check sync group
+//
+// RETURNS:
+//   - *GroupPreCheckResult: result of pre-check
+//   - error: nil if success otherwise the specific error
+func (c *Client) SyncGroupPreCheck(args *SyncGroupCheckRequest) (*SyncGroupPreCheckResult, error) {
+	result := &SyncGroupPreCheckResult{}
+	err := bce.NewRequestBuilder(c).
+		WithMethod(http.POST).
+		WithURL(getSyncGroupUrl()+"/check").
+		WithHeader(http.CONTENT_TYPE, bce.DEFAULT_CONTENT_TYPE).
+		WithBody(args).
+		WithResult(result).
+		Do()
+	return result, err
+}
+
+// CreateSyncGroup - create a sync group
+//
+// PARAMS:
+//   - args: the arguments to create sync group
+//
+// RETURNS:
+//   - *SyncGroupCreateResult: result of create sync group
+//   - error: nil if success otherwise the specific error
+func (c *Client) CreateSyncGroup(args *SyncGroupCreateRequest) (*SyncGroupCreateResult, error) {
+	result := &SyncGroupCreateResult{}
+	err := bce.NewRequestBuilder(c).
+		WithMethod(http.POST).
+		WithURL(getSyncGroupUrl()+"/create").
+		WithHeader(http.CONTENT_TYPE, bce.DEFAULT_CONTENT_TYPE).
+		WithBody(args).
+		WithResult(result).
+		Do()
+	return result, err
+}
+
+// ListSyncGroup - list sync groups
+//
+// PARAMS:
+//   - page: page number, default 1
+//   - pageSize: page size, default 10
+//
+// RETURNS:
+//   - *GroupListResult: result of sync group list
+//   - error: nil if success otherwise the specific error
+func (c *Client) ListSyncGroup(page, pageSize int) (*SyncGroupListResult, error) {
+	result := &SyncGroupListResult{}
+	err := bce.NewRequestBuilder(c).
+		WithMethod(http.GET).
+		WithURL(getSyncGroupUrl()+"/list").
+		WithQueryParamFilter("page", strconv.Itoa(page)).
+		WithQueryParamFilter("pageSize", strconv.Itoa(pageSize)).
+		WithResult(result).
+		Do()
+	return result, err
+}
+
+// GetSyncGroupDetail - get sync group detail
+//
+// PARAMS:
+//   - groupId: the sync group id
+//
+// RETURNS:
+//   - *SyncGroupDetailResult: result of sync group detail
+//   - error: nil if success otherwise the specific error
+func (c *Client) GetSyncGroupDetail(groupId string) (*SyncGroupDetailResult, error) {
+	result := &SyncGroupDetailResult{}
+	err := bce.NewRequestBuilder(c).
+		WithMethod(http.GET).
+		WithURL(getSyncGroupUrl() + "/" + groupId).
+		WithResult(result).
+		Do()
+	return result, err
+}
+
+// DeleteSyncGroup - delete a sync group
+//
+// PARAMS:
+//   - groupId: the sync group id
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) DeleteSyncGroup(groupId string) error {
+	return bce.NewRequestBuilder(c).
+		WithMethod(http.DELETE).
+		WithURL(getSyncGroupUrl() + "/" + groupId).
+		Do()
+}
+
+// RemoveSyncGroupCluster - remove a cluster from sync group
+//
+// PARAMS:
+//   - groupId: the sync group id
+//   - args: the arguments of the cluster member to remove
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) RemoveSyncGroupCluster(groupId string, args *SyncGroupMember) error {
+	return bce.NewRequestBuilder(c).
+		WithMethod(http.POST).
+		WithURL(getSyncGroupUrl() + "/" + groupId + "/removeCluster").
+		WithBody(args).
+		Do()
+}
+
+// AddSyncGroupCluster - add a cluster to sync group
+//
+// PARAMS:
+//   - groupId: the sync group id
+//   - args: the arguments of the cluster member to add
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) AddSyncGroupCluster(groupId string, args *SyncGroupMember) error {
+	return bce.NewRequestBuilder(c).
+		WithMethod(http.POST).
+		WithURL(getSyncGroupUrl() + "/" + groupId + "/addCluster").
+		WithBody(args).
+		Do()
+}
+
+// ModifySyncGroupName - modify sync group name
+//
+// PARAMS:
+//   - groupId: the sync group id
+//   - args: the arguments to modify sync group name
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) ModifySyncGroupName(groupId string, args *SyncGroupRenameArgs) error {
+	return bce.NewRequestBuilder(c).
+		WithMethod(http.PUT).
+		WithURL(getSyncGroupUrl() + "/" + groupId).
+		WithBody(args).
+		Do()
+}
+
+// GetSyncGroupStatus - get sync group sync status
+//
+// PARAMS:
+//   - groupId: the sync group id
+//
+// RETURNS:
+//   - *SyncGroupSyncStatusResult: result of sync group status
+//   - error: nil if success otherwise the specific error
+func (c *Client) GetSyncGroupStatus(groupId string) (*SyncGroupSyncStatusResult, error) {
+	result := &SyncGroupSyncStatusResult{}
+	err := bce.NewRequestBuilder(c).
+		WithMethod(http.GET).
+		WithURL(getSyncGroupUrl() + "/" + groupId + "/syncStatus").
+		WithResult(result).
+		Do()
+	return result, err
+}
+
+// GetSyncGroupDelayInfo - get sync group delay info
+//
+// PARAMS:
+//   - groupId: the sync group id
+//
+// RETURNS:
+//   - *SyncGroupDelayInfoResult: result of sync group delay info
+//   - error: nil if success otherwise the specific error
+func (c *Client) GetSyncGroupDelayInfo(groupId string) (*SyncGroupDelayInfoResult, error) {
+	result := &SyncGroupDelayInfoResult{}
+	err := bce.NewRequestBuilder(c).
+		WithMethod(http.GET).
+		WithURL(getSyncGroupUrl() + "/" + groupId + "/delayInfo").
+		WithResult(result).
+		Do()
+	return result, err
+}
+
+// ModifySyncGroupBnsGroup - modify sync group bns group
+//
+// PARAMS:
+//   - groupId: the sync group id
+//   - args: the arguments to modify sync group bns group
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) ModifySyncGroupBnsGroup(groupId string, args *SyncGroupBnsGroupArgs) error {
+	return bce.NewRequestBuilder(c).
+		WithMethod(http.PUT).
+		WithURL(getSyncGroupUrl() + "/" + groupId + "/modifyBnsGroup").
+		WithBody(args).
+		Do()
+}
+
+// ListAclUsers - list ACL users of a specified instance
+//
+// PARAMS:
+//   - instanceId: id of the instance
+//
+// RETURNS:
+//   - *AclUserListResult: result of the ACL user list
+//   - error: nil if success otherwise the specific error
+func (c *Client) ListAclUsers(instanceId string) (*AclUserListResult, error) {
+	result := &AclUserListResult{}
+	err := bce.NewRequestBuilder(c).
+		WithMethod(http.GET).
+		WithURL(INSTANCE_URL_V2 + "/" + instanceId + "/aclUserActions").
+		WithResult(result).
+		Do()
+	return result, err
+}
+
+// CreateAclUser - create an ACL user of a specified instance
+//
+// PARAMS:
+//   - instanceId: id of the instance
+//   - args: the arguments to create ACL user
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) CreateAclUser(instanceId string, args *AclUserCreateArgs) error {
+	if args == nil {
+		return fmt.Errorf("please set create acl user argments")
+	}
+	if len(args.ClientAuth) != 0 {
+		cryptedPass, err := Aes128EncryptUseSecreteKey(c.Config.Credentials.SecretAccessKey, args.ClientAuth)
+		if err != nil {
+			return err
+		}
+		args.ClientAuth = cryptedPass
+	}
+	return bce.NewRequestBuilder(c).
+		WithMethod(http.POST).
+		WithURL(INSTANCE_URL_V2 + "/" + instanceId + "/aclUserActions").
+		WithBody(args).
+		Do()
+}
+
+// DeleteAclUser - delete an ACL user of a specified instance
+//
+// PARAMS:
+//   - instanceId: id of the instance
+//   - args: the arguments to delete ACL user
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) DeleteAclUser(instanceId string, args *AclUserDeleteArgs) error {
+	return bce.NewRequestBuilder(c).
+		WithMethod(http.POST).
+		WithURL(INSTANCE_URL_V2 + "/" + instanceId + "/aclUserActions/delete").
+		WithBody(args).
+		Do()
+}
+
+// SetAclUserAuthority - set authority of an ACL user of a specified instance
+//
+// PARAMS:
+//   - instanceId: id of the instance
+//   - args: the arguments to set ACL user authority
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) SetAclUserAuthority(instanceId string, args *AclUserCreateArgs) error {
+	return bce.NewRequestBuilder(c).
+		WithMethod(http.POST).
+		WithURL(INSTANCE_URL_V2 + "/" + instanceId + "/aclUserActions/authority").
+		WithBody(args).
+		Do()
+}
+
+// ModifyAclUserPassword - modify password of an ACL user of a specified instance
+//
+// PARAMS:
+//   - instanceId: id of the instance
+//   - args: the arguments to modify ACL user password
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) ModifyAclUserPassword(instanceId string, args *AclUserPasswordArgs) error {
+	if args == nil {
+		return fmt.Errorf("please set modify acl user password argments")
+	}
+	if len(args.ClientAuth) != 0 {
+		cryptedPass, err := Aes128EncryptUseSecreteKey(c.Config.Credentials.SecretAccessKey, args.ClientAuth)
+		if err != nil {
+			return err
+		}
+		args.ClientAuth = cryptedPass
+	}
+	return bce.NewRequestBuilder(c).
+		WithMethod(http.POST).
+		WithURL(INSTANCE_URL_V2 + "/" + instanceId + "/aclUserActions/modifyPasswd").
+		WithBody(args).
+		Do()
+}
+
+// ToPrepay - convert postpaid instances to prepaid
+//
+// PARAMS:
+//   - args: the arguments to convert postpaid instances to prepaid
+//
+// RETURNS:
+//   - *ToPrepayResult: result containing the prepaid order id
+//   - error: nil if success otherwise the specific error
+func (c *Client) ToPrepay(args *ToPrepayArgs) (*ToPrepayResult, error) {
+	result := &ToPrepayResult{}
+	err := bce.NewRequestBuilder(c).
+		WithMethod(http.POST).
+		WithURL(INSTANCE_URL_V1+"/toPrepay").
+		WithHeader(http.CONTENT_TYPE, bce.DEFAULT_CONTENT_TYPE).
+		WithBody(args).
+		WithResult(result).
+		Do()
+	return result, err
+}
+
+// ToPostpay - convert prepaid instances to postpaid
+//
+// PARAMS:
+//   - args: the arguments to convert prepaid instances to postpaid
+//
+// RETURNS:
+//   - *ToPrepayResult: result containing order ids joined by commas
+//   - error: nil if success otherwise the specific error
+func (c *Client) ToPostpay(args *ToPostpayArgs) (*ToPrepayResult, error) {
+	result := &ToPrepayResult{}
+	err := bce.NewRequestBuilder(c).
+		WithMethod(http.POST).
+		WithURL(INSTANCE_URL_V1+"/toPostpay").
+		WithHeader(http.CONTENT_TYPE, bce.DEFAULT_CONTENT_TYPE).
+		WithBody(args).
+		WithResult(result).
+		Do()
+	return result, err
+}
+
+// CancelToPostpay - cancel prepaid to postpaid conversion
+//
+// PARAMS:
+//   - args: the arguments to cancel prepaid to postpaid conversion
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) CancelToPostpay(args *ToPostpayArgs) error {
+	return bce.NewRequestBuilder(c).
+		WithMethod(http.POST).
+		WithURL(INSTANCE_URL_V1+"/cancelToPostpay").
+		WithHeader(http.CONTENT_TYPE, bce.DEFAULT_CONTENT_TYPE).
+		WithBody(args).
+		Do()
+}
+
+// SwitchMasterSlave - switch master and slave of specified shards
+//
+// PARAMS:
+//   - instanceId: id of the instance
+//   - args: the arguments containing shards to switch
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) SwitchMasterSlave(instanceId string, args *SwitchMasterSlaveArgs) error {
+	return bce.NewRequestBuilder(c).
+		WithMethod(http.PUT).
+		WithURL(INSTANCE_URL_V1+"/"+instanceId+"/switchMasterSlave").
+		WithHeader(http.CONTENT_TYPE, bce.DEFAULT_CONTENT_TYPE).
+		WithBody(args).
+		Do()
+}
+
+// MigrateAvailabilityZone - migrate the instance to another availability zone / subnet
+//
+// PARAMS:
+//   - instanceId: id of the instance
+//   - args: the arguments containing the full replication info
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) MigrateAvailabilityZone(instanceId string, args *MigrateAvailabilityZoneArgs) error {
+	return bce.NewRequestBuilder(c).
+		WithMethod(http.POST).
+		WithURL(INSTANCE_URL_V1+"/"+instanceId+"/azoneMigration").
+		WithHeader(http.CONTENT_TYPE, bce.DEFAULT_CONTENT_TYPE).
+		WithBody(args).
+		Do()
+}
+
+// ModifyEntrance - modify the internal access IP of the instance
+//
+// PARAMS:
+//   - instanceId: id of the instance
+//   - args: the arguments controlling whether to defer the change to maintain window
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) ModifyEntrance(instanceId string, args *ModifyEntranceArgs) error {
+	return bce.NewRequestBuilder(c).
+		WithMethod(http.POST).
+		WithURL(INSTANCE_URL_V1+"/"+instanceId+"/azoneMigration/modifyEntrance").
+		WithHeader(http.CONTENT_TYPE, bce.DEFAULT_CONTENT_TYPE).
+		WithBody(args).
+		Do()
+}
+
+// UpgradeVersion - upgrade the engine major version of the instance
+//
+// PARAMS:
+//   - instanceId: id of the instance
+//   - args: the arguments containing target kernel version and execution time
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) UpgradeVersion(instanceId string, args *UpgradeVersionArgs) error {
+	return bce.NewRequestBuilder(c).
+		WithMethod(http.POST).
+		WithURL(INSTANCE_URL_V1+"/"+instanceId+"/upgradeVersion").
+		WithHeader(http.CONTENT_TYPE, bce.DEFAULT_CONTENT_TYPE).
+		WithBody(args).
+		Do()
+}
+
+// UpgradeProxy - upgrade or restart the proxy of the instance
+//
+// PARAMS:
+//   - instanceId: id of the instance
+//   - args: the arguments containing proxy list, upgrade type and execution time
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) UpgradeProxy(instanceId string, args *UpgradeProxyArgs) error {
+	return bce.NewRequestBuilder(c).
+		WithMethod(http.PUT).
+		WithURL(INSTANCE_URL_V1+"/"+instanceId+"/upgradeProxy").
+		WithHeader(http.CONTENT_TYPE, bce.DEFAULT_CONTENT_TYPE).
+		WithBody(args).
+		Do()
+}
+
+// GetAutoScalingConfig - get memory auto scaling config of the instance
+//
+// PARAMS:
+//   - instanceId: id of the instance
+//
+// RETURNS:
+//   - *AutoScalingConfigResult: result of memory auto scaling config
+//   - error: nil if success otherwise the specific error
+func (c *Client) GetAutoScalingConfig(instanceId string) (*AutoScalingConfigResult, error) {
+	result := &AutoScalingConfigResult{}
+	err := bce.NewRequestBuilder(c).
+		WithMethod(http.GET).
+		WithURL(INSTANCE_URL_V1 + "/" + instanceId + "/autoScalingConfig").
+		WithResult(result).
+		Do()
+	return result, err
+}
+
+// SetAutoScalingConfig - set memory auto scaling config of the instance
+//
+// PARAMS:
+//   - instanceId: id of the instance
+//   - args: the arguments containing memory auto scaling config
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) SetAutoScalingConfig(instanceId string, args *AutoScalingConfigResult) error {
+	return bce.NewRequestBuilder(c).
+		WithMethod(http.POST).
+		WithURL(INSTANCE_URL_V1+"/"+instanceId+"/autoScalingConfig").
+		WithHeader(http.CONTENT_TYPE, bce.DEFAULT_CONTENT_TYPE).
+		WithBody(args).
+		Do()
+}
+
+// DeleteAutoScalingConfig - delete memory auto scaling config of the instance
+//
+// PARAMS:
+//   - instanceId: id of the instance
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) DeleteAutoScalingConfig(instanceId string) error {
+	return bce.NewRequestBuilder(c).
+		WithMethod(http.POST).
+		WithURL(INSTANCE_URL_V1+"/"+instanceId+"/deleteAutoScalingConfig").
+		WithHeader(http.CONTENT_TYPE, bce.DEFAULT_CONTENT_TYPE).
+		Do()
 }

@@ -31,26 +31,31 @@ type Billing struct {
 }
 
 type Subnet struct {
-	ZoneName string `json:"zoneName"`
+	Name     string `json:"name,omitempty"`
 	SubnetID string `json:"subnetId"`
+	ZoneName string `json:"zoneName"`
+	Cidr     string `json:"cidr,omitempty"`
+	VpcID    string `json:"vpcId,omitempty"`
 }
 
 type CreateInstanceArgs struct {
-	Billing           Billing                   `json:"billing"`
-	PurchaseCount     int                       `json:"purchaseCount"`
-	InstanceName      string                    `json:"instanceName"`
-	NodeType          string                    `json:"nodeType"`
-	ShardNum          int                       `json:"shardNum"`
-	ProxyNum          int                       `json:"proxyNum"`
-	ClusterType       string                    `json:"clusterType"`
-	ReplicationNum    int                       `json:"replicationNum"`
-	ReplicationInfo   []Replication             `json:"replicationInfo"`
-	Port              int                       `json:"port"`
-	Engine            int                       `json:"engine,omitempty"`
-	EngineVersion     string                    `json:"engineVersion"`
-	DiskFlavor        int                       `json:"diskFlavor,omitempty"`
-	DiskType          string                    `json:"diskType,omitempty"`
-	VpcID             string                    `json:"vpcId"`
+	Billing       Billing `json:"billing"`
+	PurchaseCount int     `json:"purchaseCount"`
+	InstanceName  string  `json:"instanceName"`
+	NodeType      string  `json:"nodeType"`
+	ShardNum      int     `json:"shardNum"`
+	ProxyNum      int     `json:"proxyNum"`
+	ClusterType   string  `json:"clusterType"`
+	// Deprecated: 该字段已废弃，请使用 ReplicationInfo 替代
+	ReplicationNum  int           `json:"replicationNum"`
+	ReplicationInfo []Replication `json:"replicationInfo"`
+	Port            int           `json:"port"`
+	Engine          int           `json:"engine,omitempty"`
+	EngineVersion   string        `json:"engineVersion"`
+	DiskFlavor      int           `json:"diskFlavor,omitempty"`
+	DiskType        string        `json:"diskType,omitempty"`
+	VpcID           string        `json:"vpcId"`
+	// Deprecated: 该字段已废弃，请使用 ReplicationInfo 替代
 	Subnets           []Subnet                  `json:"subnets,omitempty"`
 	AutoRenewTimeUnit string                    `json:"autoRenewTimeUnit,omitempty"`
 	AutoRenewTime     int                       `json:"autoRenewTime,omitempty"`
@@ -58,14 +63,18 @@ type CreateInstanceArgs struct {
 	ClientToken       string                    `json:"-"`
 	ClientAuth        string                    `json:"clientAuth"`
 	ResourceGroupId   string                    `json:"resourceGroupId"`
+	ConfTpl           string                    `json:"confTpl,omitempty"`
 	StoreType         int                       `json:"storeType"`
 	EnableReadOnly    int                       `json:"enableReadOnly,omitempty"`
 	Tags              []model.TagModel          `json:"tags"`
 	BcmInstanceGroups []BcmInstanceGroupRequest `json:"bcmInstanceGroups"`
+	AutoBackupConfig  string                    `json:"autoBackupConfig,omitempty"`
+	DeployIdList      []string                  `json:"deployIdList,omitempty"`
 }
 
 type CreateInstanceResult struct {
 	InstanceIds []string `json:"instanceIds"`
+	OrderId     string   `json:"orderId"`
 }
 
 type InstanceModel struct {
@@ -89,11 +98,21 @@ type InstanceModel struct {
 	Tags               []model.TagModel `json:"tags"`
 	ResourceGroupId    string           `json:"resourceGroupId"`
 	ResourceGroupName  string           `json:"resourceGroupName"`
+	DeployIdList       []string         `json:"deployIdList"`
+	OrderStatus        string           `json:"orderStatus"`
+	NodeType           string           `json:"nodeType"`
+	DiskFlavor         int              `json:"diskFlavor"`
+	DiskType           string           `json:"diskType"`
+	StoreType          int              `json:"storeType"`
+	Eip                string           `json:"eip"`
+	Entrance           string           `json:"entrance"`
 }
 
 type ListInstancesArgs struct {
-	Marker  string
-	MaxKeys int
+	Marker      string
+	MaxKeys     int
+	InstanceIds string
+	VnetIp      string
 }
 
 type ListInstancesResult struct {
@@ -105,12 +124,14 @@ type ListInstancesResult struct {
 }
 
 type ResizeInstanceArgs struct {
-	NodeType    string `json:"nodeType"`
-	ShardNum    int    `json:"shardNum"`
-	IsDefer     bool   `json:"isDefer"`
-	ClientToken string `json:"-"`
-	DiskFlavor  int    `json:"diskFlavor"`
-	DiskType    string `json:"diskType"`
+	NodeType        string        `json:"nodeType"`
+	ShardNum        int           `json:"shardNum"`
+	IsDefer         bool          `json:"isDefer"`
+	ClientToken     string        `json:"-"`
+	DiskFlavor      int           `json:"diskFlavor"`
+	DiskType        string        `json:"diskType"`
+	ModifyMethod    string        `json:"modifyMethod"`
+	ReplicationInfo []Replication `json:"replicationInfo"`
 }
 
 type ReplicationArgs struct {
@@ -135,38 +156,52 @@ type RestartInstanceArgs struct {
 }
 
 type GetInstanceDetailResult struct {
-	InstanceID         string           `json:"instanceId"`
-	InstanceName       string           `json:"instanceName"`
-	InstanceStatus     string           `json:"instanceStatus"`
-	ClusterType        string           `json:"clusterType"`
-	Engine             string           `json:"engine"`
-	EngineVersion      string           `json:"engineVersion"`
-	VnetIP             string           `json:"vnetIp"`
-	Domain             string           `json:"domain"`
-	Port               int              `json:"port"`
-	InstanceCreateTime string           `json:"instanceCreateTime"`
-	InstanceExpireTime string           `json:"instanceExpireTime"`
-	Capacity           float64          `json:"capacity"`
-	UsedCapacity       float64          `json:"usedCapacity"`
-	PaymentTiming      string           `json:"paymentTiming"`
-	VpcID              string           `json:"vpcId"`
-	ZoneNames          []string         `json:"zoneNames"`
-	Subnets            []Subnet         `json:"subnets"`
-	AutoRenew          string           `json:"autoRenew"`
-	Tags               []model.TagModel `json:"tags"`
-	ShardNum           int              `json:"shardNum"`
-	ReplicationNum     int              `json:"replicationNum"`
-	NodeType           string           `json:"nodeType"`
-	DiskFlavor         int              `json:"diskFlavor"`
-	DiskType           string           `json:"diskType"`
-	StoreType          int              `json:"storeType"`
-	Eip                string           `json:"eip"`
-	PublicDomain       string           `json:"publicDomain"`
-	EnableReadOnly     int              `json:"enableReadOnly"`
-	ReplicationInfo    []Replication    `json:"replicationInfo"`
-	BnsGroup           string           `json:"bnsGroup"`
-	ResourceGroupId    string           `json:"resourceGroupId"`
-	ResourceGroupName  string           `json:"resourceGroupName"`
+	InstanceID              string                  `json:"instanceId"`
+	InstanceName            string                  `json:"instanceName"`
+	InstanceStatus          string                  `json:"instanceStatus"`
+	ClusterType             string                  `json:"clusterType"`
+	Engine                  string                  `json:"engine"`
+	EngineVersion           string                  `json:"engineVersion"`
+	VnetIP                  string                  `json:"vnetIp"`
+	Domain                  string                  `json:"domain"`
+	Port                    int                     `json:"port"`
+	InstanceCreateTime      string                  `json:"instanceCreateTime"`
+	InstanceExpireTime      string                  `json:"instanceExpireTime"`
+	Capacity                float64                 `json:"capacity"`
+	UsedCapacity            float64                 `json:"usedCapacity"`
+	PaymentTiming           string                  `json:"paymentTiming"`
+	VpcID                   string                  `json:"vpcId"`
+	ZoneNames               []string                `json:"zoneNames"`
+	Subnets                 []Subnet                `json:"subnets"`
+	AutoRenew               string                  `json:"autoRenew"`
+	Tags                    []model.TagModel        `json:"tags"`
+	ShardNum                int                     `json:"shardNum"`
+	ReplicationNum          int                     `json:"replicationNum"`
+	NodeType                string                  `json:"nodeType"`
+	DiskFlavor              int                     `json:"diskFlavor"`
+	DiskType                string                  `json:"diskType"`
+	StoreType               int                     `json:"storeType"`
+	Eip                     string                  `json:"eip"`
+	PublicDomain            string                  `json:"publicDomain"`
+	EnableReadOnly          int                     `json:"enableReadOnly"`
+	ReplicationInfo         []Replication           `json:"replicationInfo"`
+	BnsGroup                string                  `json:"bnsGroup"`
+	ResourceGroupId         string                  `json:"resourceGroupId"`
+	ResourceGroupName       string                  `json:"resourceGroupName"`
+	DeployIdList            []string                `json:"deployIdList"`
+	OrderStatus             string                  `json:"orderStatus"`
+	Entrance                string                  `json:"entrance"`
+	EnableSlowLog           int                     `json:"enableSlowLog"`
+	RedisList               []RedisNode             `json:"redisList"`
+	ProxyList               []ProxyItem             `json:"proxyList"`
+	CacheClusterInstances   []CacheClusterNode      `json:"cacheClusterInstances"`
+	FullVersionInfo         InstanceFullVersionInfo `json:"fullVersionInfo"`
+	MaintainTime            MaintainTime            `json:"maintainTime"`
+	EnableHotkey            bool                    `json:"enableHotkey"`
+	FeatureSwitches         FeatureSwitches         `json:"featureSwitches"`
+	CrossAzNearest          string                  `json:"crossAzNearest"`
+	EntranceList            []EntranceItem          `json:"entranceList"`
+	SupportSentinelCommands bool                    `json:"supportSentinelCommands"`
 }
 
 type UpdateInstanceNameArgs struct {
@@ -182,12 +217,15 @@ type NodeType struct {
 	PeakQPS                 int     `json:"peakQps"`
 	MaxConnections          int     `json:"maxConnections"`
 	AllowedNodeNumList      []int   `json:"allowedNodeNumList"`
+	MinDiskFlavor           int     `json:"minDiskFlavor"`
+	MaxDiskFlavor           int     `json:"maxDiskFlavor"`
 }
 
 type GetNodeTypeListResult struct {
-	ClusterNodeTypeList []NodeType `json:"clusterNodeTypeList"`
-	DefaultNodeTypeList []NodeType `json:"defaultNodeTypeList"`
-	HsdbNodeTypeList    []NodeType `json:"hsdbNodeTypeList"`
+	ClusterNodeTypeList     []NodeType `json:"clusterNodeTypeList"`
+	DefaultNodeTypeList     []NodeType `json:"defaultNodeTypeList"`
+	HsdbNodeTypeList        []NodeType `json:"hsdbNodeTypeList"`
+	PegaClusterNodeTypeList []NodeType `json:"pegaClusterNodeTypeList"`
 }
 
 type ListSubnetsArgs struct {
@@ -221,8 +259,11 @@ type ZoneNames struct {
 }
 
 type FlushInstanceArgs struct {
-	Password    string `json:"password"`
-	ClientToken string `json:"-"`
+	Password       string `json:"password"`
+	ClientToken    string `json:"-"`
+	DbIndex        int    `json:"dbIndex"`
+	IsFlushExpired bool   `json:"isFlushExpired"`
+	IsDefer        bool   `json:"isDefer"`
 }
 
 type BindingTagArgs struct {
@@ -236,6 +277,21 @@ type GetSecurityIpResult struct {
 type SecurityIpArgs struct {
 	SecurityIps []string `json:"securityIps"`
 	ClientToken string   `json:"-"`
+}
+
+type WhiteListGroupResult struct {
+	ClusterIPGroups []WhiteListGroup `json:"clusterIPGroups"`
+}
+
+type WhiteListGroup struct {
+	GroupName string   `json:"groupName"`
+	IPList    []string `json:"ipList"`
+}
+
+type WhiteListGroupArgs struct {
+	GroupName     string   `json:"groupName"`
+	NewGroupName  string   `json:"newGroupName,omitempty"`
+	ClusterIPList []string `json:"clusterIpList"`
 }
 
 type ModifyPasswordArgs struct {
@@ -252,6 +308,10 @@ type Parameter struct {
 	ForceRestart string `json:"forceRestart"`
 	Name         string `json:"name"`
 	Value        string `json:"value"`
+	Type         int    `json:"type"`
+	Range        string `json:"range"`
+	Module       int    `json:"module"`
+	Desc         string `json:"desc"`
 }
 
 type ModifyParametersArgs struct {
@@ -265,31 +325,153 @@ type InstanceParam struct {
 }
 
 type GetBackupListResult struct {
-	TotalCount string       `json:"totalCount"`
+	TotalCount int          `json:"totalCount"`
 	Backups    []BackupInfo `json:"backups"`
 }
 
 type BackupInfo struct {
-	BackupType string         `json:"backupType"`
-	Comment    string         `json:"comment"`
-	StartTime  string         `json:"startTime"`
-	Records    []BackupRecord `json:"records"`
+	BackupType  string         `json:"backupType"`
+	Comment     string         `json:"comment"`
+	StartTime   string         `json:"startTime"`
+	Recoverable string         `json:"recoverable"`
+	BatchID     string         `json:"batchId"`
+	Records     []BackupRecord `json:"records"`
 }
 
 type BackupRecord struct {
 	BackupRecordId string `json:"backupRecordId"`
 	BackupStatus   string `json:"backupStatus"`
-	Duration       string `json:"duration"`
-	ObjectSize     string `json:"objectSize"`
+	Duration       int64  `json:"duration"`
+	ObjectSize     int64  `json:"objectSize"`
 	ShardName      string `json:"shardName"`
 	StartTime      string `json:"startTime"`
+	BackupType     string `json:"backupType"`
+	Comment        string `json:"comment"`
 }
 
 type ModifyBackupPolicyArgs struct {
-	BackupDays  string `json:"backupDays"`
-	BackupTime  string `json:"backupTime"`
-	ClientToken string `json:"clientToken"`
-	ExpireDay   int    `json:"expireDay"`
+	BackupDays           string `json:"backupDays"`
+	BackupTime           string `json:"backupTime"`
+	ClientToken          string `json:"clientToken"`
+	ExpireDay            int    `json:"expireDay"`
+	IsEncrypt            string `json:"isEncrypt"`
+	IsEnableBackupLog    string `json:"isEnableBackupLog"`
+	HighFreqBackupEnable bool   `json:"highFreqBackupEnable"`
+	HighFreqBackupConfig string `json:"highFreqBackupConfig"`
+}
+
+type BackupPolicyResult struct {
+	BackupTime           string   `json:"backupTime"`
+	BackupDays           string   `json:"backupDays"`
+	ExpireDay            int      `json:"expireDay"`
+	IsEncrypt            string   `json:"isEncrypt"`
+	IsEnableBackupLog    string   `json:"isEnableBackupLog"`
+	HighFreqBackupEnable bool     `json:"highFreqBackupEnable"`
+	HighFreqBackupConfig string   `json:"highFreqBackupConfig"`
+	HighFreqList         []string `json:"highFreqList"`
+}
+
+type BackupCommentArgs struct {
+	Comment string `json:"comment"`
+}
+
+type AclUserListResult struct {
+	Success bool          `json:"success"`
+	Result  []AclUserItem `json:"result"`
+}
+
+type AclUserItem struct {
+	UserName     string `json:"userName"`
+	UpdateStatus int    `json:"updateStatus"`
+	Extra        string `json:"extra"`
+	UserType     int    `json:"userType"`
+}
+
+type AclUserCreateArgs struct {
+	UserName   string `json:"userName"`
+	ClientAuth string `json:"clientAuth"`
+	Extra      string `json:"extra,omitempty"`
+	UserType   int    `json:"userType"`
+}
+
+type AclUserDeleteArgs struct {
+	UserName string `json:"userName"`
+}
+
+type AclUserPasswordArgs struct {
+	UserName   string `json:"userName"`
+	ClientAuth string `json:"clientAuth"`
+}
+
+type ToPrepayArgs struct {
+	Duration    int      `json:"duration"`
+	InstanceIds []string `json:"instanceIds"`
+}
+
+type ToPostpayArgs struct {
+	InstanceIds []string `json:"instanceIds"`
+}
+
+type SwitchMasterSlaveShard struct {
+	HashName   string `json:"hashName"`
+	NodeShowID string `json:"nodeShowId"`
+}
+
+type SwitchMasterSlaveArgs struct {
+	Shards []SwitchMasterSlaveShard `json:"shards"`
+}
+
+type MigrateAvailabilityZoneArgs struct {
+	IsDefer         bool          `json:"isDefer"`
+	ReplicationInfo []Replication `json:"replicationInfo"`
+}
+
+type ModifyEntranceArgs struct {
+	IsDefer bool `json:"isDefer"`
+}
+
+type UpgradeVersionArgs struct {
+	KernelVersion string `json:"kernelVersion,omitempty"`
+	IsDefer       bool   `json:"isDefer,omitempty"`
+}
+
+type UpgradeProxyArgs struct {
+	ProxyList   []string `json:"proxyList,omitempty"`
+	UpgradeType string   `json:"upgradeType"`
+	IsDefer     bool     `json:"isDefer,omitempty"`
+}
+
+type MemAutoScalingConfig struct {
+	MemUsageUpperThreshold        int    `json:"memUsageUpperThreshold"`
+	MemUsageDownThreshold         int    `json:"memUsageDownThreshold"`
+	MaxNodeType                   string `json:"maxNodeType"`
+	MinNodeType                   string `json:"minNodeType"`
+	ObservationWindowSizeForUpper string `json:"observationWindowSizeForUpper"`
+	ObservationWindowSizeForDown  string `json:"observationWindowSizeForDown"`
+}
+
+type AutoScalingConfigResult struct {
+	MemSpec *MemAutoScalingConfig `json:"memSpec"`
+}
+
+type ToPrepayResult struct {
+	OrderId string `json:"orderId"`
+}
+
+type BackupUsageResult struct {
+	LogicalLogBackupBillingSizeBytes   int64  `json:"logicalLogBackupBillingSizeBytes"`
+	SnapshotDataBackupSizeBytes        int64  `json:"snapshotDataBackupSizeBytes"`
+	PhysicalDataBackupSizeBytes        int64  `json:"physicalDataBackupSizeBytes"`
+	LogicalLogBackupSizeBytes          int64  `json:"logicalLogBackupSizeBytes"`
+	LogicalDataBackupSizeBytes         int64  `json:"logicalDataBackupSizeBytes"`
+	PhysicalDataBackupBillingSizeBytes int64  `json:"physicalDataBackupBillingSizeBytes"`
+	LogicalDataBackupBillingSizeBytes  int64  `json:"logicalDataBackupBillingSizeBytes"`
+	PhysicalLogBackupSizeBytes         int64  `json:"physicalLogBackupSizeBytes"`
+	PhysicalLogBackupBillingSizeBytes  int64  `json:"physicalLogBackupBillingSizeBytes"`
+	SnapshotDataBackupBillingSizeBytes int64  `json:"snapshotDataBackupBillingSizeBytes"`
+	DataType                           string `json:"dataType"`
+	ClusterID                          string `json:"clusterID"`
+	AppID                              string `json:"appID"`
 }
 
 type ListVpcSecurityGroupsResult struct {
@@ -321,25 +503,30 @@ type UnbindSecurityGroupArgs struct {
 }
 
 type ListSecurityGroupResult struct {
-	Groups []SecurityGroupDetail `json:"groups"`
+	Groups      []SecurityGroupDetail `json:"groups"`
+	ActiveRules []SecurityGroupRule   `json:"activeRules"`
 }
 
 type SecurityGroupRule struct {
 	PortRange           string `json:"portRange"`
 	Protocol            string `json:"protocol"`
 	RemoteGroupID       string `json:"remoteGroupId"`
+	RemoteGroupName     string `json:"remoteGroupName"`
 	RemoteIP            string `json:"remoteIP"`
 	Ethertype           string `json:"ethertype"`
 	TenantID            string `json:"tenantId"`
 	Name                string `json:"name"`
 	ID                  string `json:"id"`
 	SecurityGroupRuleID string `json:"securityGroupRuleId"`
+	SecurityGroupID     string `json:"securityGroupId"`
+	SecurityGroupUuid   string `json:"securityGroupUuid"`
 	Direction           string `json:"direction"`
 }
 
 type SecurityGroupDetail struct {
 	SecurityGroupName   string              `json:"securityGroupName"`
 	SecurityGroupID     string              `json:"securityGroupId"`
+	SecurityGroupUuid   string              `json:"securityGroupUuid"`
 	SecurityGroupRemark string              `json:"securityGroupRemark"`
 	Inbound             []SecurityGroupRule `json:"inbound"`
 	Outbound            []SecurityGroupRule `json:"outbound"`
@@ -441,6 +628,65 @@ type ShardLog struct {
 type GetLogArgs struct {
 	ValidSeconds int `json:"validSeconds"`
 }
+type RedisNode struct {
+	UUID              string `json:"uuid"`
+	NodeShowID        string `json:"nodeShowId"`
+	CacheInstanceType int    `json:"cacheInstanceType"`
+	IsReadOnly        int    `json:"isReadOnly"`
+	InGroup           int    `json:"inGroup"`
+	AvailabilityZone  string `json:"availabilityZone"`
+	SubnetID          string `json:"subnetId"`
+	Status            int    `json:"status"`
+	Weight            int    `json:"weight"`
+	HashName          string `json:"hashName"`
+	ShardID           int    `json:"shardId"`
+	NodeID            int    `json:"nodeId"`
+}
+
+type ProxyItem struct {
+	UUID             string `json:"uuid"`
+	NodeShowID       string `json:"nodeShowId"`
+	AvailabilityZone string `json:"availabilityZone"`
+	NodeID           string `json:"nodeId"`
+}
+
+type CacheClusterNode struct {
+	InstanceID string `json:"instanceId"`
+	FlavorInGB string `json:"flavorInGB"`
+	HashName   string `json:"hashName"`
+	Domain     string `json:"domain"`
+	CreateTime string `json:"createTime"`
+	ShardID    string `json:"shardId"`
+}
+
+type InstanceFullVersionInfo struct {
+	ProxyFullVersion             string `json:"proxyFullVersion"`
+	RedisOrPegaFullVerison       string `json:"redisOrPegaFullVerison"`
+	ProxyLatestFullVersion       string `json:"proxyLatestFullVersion"`
+	RedisOrPegaLatestFullVersion string `json:"redisOrPegaLatestFullVersion"`
+	IsProxyCanUpgrade            bool   `json:"isProxyCanUpgrade"`
+	IsRedisOrPegaCanUpgrade      bool   `json:"isRedisOrPegaCanUpgrade"`
+	IsPegaCanRestart             bool   `json:"isPegaCanRestart"`
+}
+
+type FeatureSwitches struct {
+	GroupModify            bool `json:"groupModify"`
+	CrossAzNearest         bool `json:"crossAzNearest"`
+	ProxyUpgradeSupport    bool `json:"proxyUpgradeSupport"`
+	RecoverInOriginSupport bool `json:"recoverInOriginSupport"`
+	RecoverInNewSupport    bool `json:"recoverInNewSupport"`
+	SupportSentinelSwitch  bool `json:"supportSentinelSwitch"`
+	WhitelistGroupSupport  bool `json:"whitelistGroupSupport"`
+	BandwidthModify        bool `json:"bandwidthModify"`
+	ShadowBackupSupport    bool `json:"shadowBackupSupport"`
+}
+
+type EntranceItem struct {
+	IP   string `json:"ip"`
+	Port int    `json:"port"`
+	Zone string `json:"zone"`
+}
+
 type GetMaintainTimeResult struct {
 	CacheClusterShowId string       `json:"cacheClusterShowId"`
 	MaintainTime       MaintainTime `json:"maintainTime"`
@@ -458,13 +704,14 @@ type CreatePriceArgs struct {
 	ShardNum       int    `json:"shardNum,omitempty"`
 	ReplicationNum int    `json:"replicationNum,omitempty"`
 	InstanceNum    int    `json:"instanceNum,omitempty"`
-	DiskType       int    `json:"diskType,omitempty"`
+	DiskType       string `json:"diskType,omitempty"`
 	DiskFlavor     int    `json:"diskFlavor,omitempty"`
 	ChargeType     string `json:"chargeType,omitempty"`
 	Period         int    `json:"period,omitempty"`
 }
 type CreatePriceResult struct {
-	Price float64 `json:"price,omitempty"`
+	Price        float64 `json:"price,omitempty"`
+	CatalogPrice float64 `json:"catalogPrice,omitempty"`
 }
 
 type ResizePriceArgs struct {
@@ -498,7 +745,7 @@ type SwapDomainArgs struct {
 
 type GetBackupDetailResult struct {
 	Url           string `json:"url"`
-	UrlExpiration string `json:"urlExpiration"`
+	UrlExpiration int    `json:"urlExpiration"`
 }
 
 type GroupPreCheckArgs struct {
@@ -626,6 +873,141 @@ type GroupFollowerInfo struct {
 	ForbidWrite       int     `json:"forbidWrite"`
 	AvailabilityZone  string  `json:"availabilityZone"`
 	ExpiredTime       string  `json:"expiredTime"`
+}
+
+type SyncGroupBaseInfo struct {
+	SyncGroupShowId     string `json:"syncGroupShowId"`
+	SyncGroupName       string `json:"syncGroupName"`
+	Status              string `json:"status"`
+	ClusterNum          int    `json:"clusterNum"`
+	AvailabilityZone    string `json:"availabilityZone"`
+	NodeType            string `json:"nodeType"`
+	NetConn             string `json:"netConn"`
+	ConfilctResolution  string `json:"confilctResolution"`
+	SyncGroupCreateTime string `json:"syncGroupCreateTime"`
+	SameSpec            bool   `json:"sameSpec"`
+	SameShardNum        bool   `json:"sameShardNum"`
+	Engine              string `json:"engine"`
+	BnsGroup            string `json:"bnsGroup"`
+}
+
+type SyncGroupMember struct {
+	MemberId string `json:"memberId"`
+	Region   string `json:"region"`
+}
+
+type SyncGroupCheckRequest struct {
+	SyncGroupShowId string            `json:"syncGroupShowId"`
+	Members         []SyncGroupMember `json:"members"`
+}
+
+type SyncGroupPreCheckResult struct {
+	CheckResult       []SyncGroupCheckItem      `json:"checkResult"`
+	ConnectionResults []SyncGroupConnectionItem `json:"connectionResults"`
+}
+
+type SyncGroupCheckItem struct {
+	MemberId        string `json:"memberId"`
+	NoData          bool   `json:"noData"`
+	Version         bool   `json:"version"`
+	EngineVersion   bool   `json:"engineVersion"`
+	ClusterStatus   bool   `json:"clusterStatus"`
+	ShardNum        bool   `json:"shardNum"`
+	ReplicationNum  bool   `json:"replicationNum"`
+	Flavor          bool   `json:"flavor"`
+	NotJoined       bool   `json:"notJoined"`
+	NoSecurityGroup bool   `json:"noSecurityGroup"`
+	IsHitX1         bool   `json:"isHitX1"`
+	IsAppendOnlyOn  bool   `json:"isAppendOnlyOn"`
+	SamePasswd      bool   `json:"samePasswd"`
+}
+
+type SyncGroupConnectionItem struct {
+	SourceId    string `json:"sourceId"`
+	TargetId    string `json:"targetId"`
+	Connectable bool   `json:"connectable"`
+}
+
+type SyncGroupCreateRequest struct {
+	SyncGroupName string            `json:"syncGroupName"`
+	BnsName       string            `json:"bnsName"`
+	Members       []SyncGroupMember `json:"members"`
+}
+
+type SyncGroupCreateResult struct {
+	SyncGroupShowId string `json:"syncGroupShowId"`
+}
+
+type SyncGroupListResult struct {
+	TotalCount int             `json:"totalCount"`
+	PageNo     int             `json:"pageNo"`
+	PageSize   int             `json:"pageSize"`
+	Result     []SyncGroupItem `json:"result"`
+}
+
+type SyncGroupItem struct {
+	SyncGroupBaseInfo
+	Cluster []SyncGroupItemCluster `json:"cluster"`
+}
+
+type SyncGroupItemCluster struct {
+	ClusterShowId string `json:"clusterShowId"`
+	Region        string `json:"region"`
+}
+
+type SyncGroupDetailResult struct {
+	SyncGroupBaseInfo
+	Cluster []CacheSyncGroupInstance `json:"cluster"`
+}
+
+type CacheSyncGroupInstance struct {
+	ClusterId         int64          `json:"clusterId"`
+	ClusterName       string         `json:"clusterName"`
+	ClusterShowId     string         `json:"clusterShowId"`
+	Region            string         `json:"region"`
+	ClusterStatus     string         `json:"clusterStatus"`
+	ClusterEngine     string         `json:"clusterEngine"`
+	CreateTime        string         `json:"createTime"`
+	TotalCapacityInGb float64        `json:"totalCapacityInGb"`
+	UsedCapacityInGb  float64        `json:"usedCapacityInGb"`
+	ExpiredTime       string         `json:"expiredTime"`
+	ShardList         []string       `json:"shardList"`
+	SyncFlow          []SyncFlowItem `json:"syncFlow"`
+}
+
+type SyncFlowItem struct {
+	TargetBLBIp         string `json:"targetBLBIp"`
+	TargetBLBPort       int    `json:"targetBLBPort"`
+	TargetClusterShowId string `json:"targetClusterShowId"`
+}
+
+type SyncGroupSyncStatusResult struct {
+	SyncGroupShowId string                        `json:"syncGroupShowId"`
+	SyncStatus      []SyncGroupInstanceSyncStatus `json:"syncStatus"`
+}
+
+type SyncGroupInstanceSyncStatus struct {
+	MemberId string `json:"memberId"`
+	Status   string `json:"status"`
+}
+
+type SyncGroupDelayInfoResult struct {
+	DelayInfo []SyncGroupDelayInfoItem `json:"delayInfo"`
+}
+
+type SyncGroupDelayInfoItem struct {
+	SourceCluster string `json:"sourceCluster"`
+	DestCluster   string `json:"destCluster"`
+	DelayResult   int64  `json:"delayResult"`
+	TimeResult    int64  `json:"timeResult"`
+}
+
+type SyncGroupRenameArgs struct {
+	GroupName string `json:"groupName"`
+}
+
+type SyncGroupBnsGroupArgs struct {
+	BnsGroup string `json:"bnsGroup"`
 }
 
 type FollowerInfo struct {

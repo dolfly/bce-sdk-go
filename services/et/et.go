@@ -151,7 +151,6 @@ func (c *Client) DisableEtChannelIPv6(args *DisableEtChannelIPv6Args) error {
 	return bce.NewRequestBuilder(c).
 		WithURL(getURLForEtChannelId(args.EtId, args.EtChannelId)).
 		WithMethod(http.PUT).
-		WithBody(args).
 		WithQueryParam("disableIpv6", "").
 		WithQueryParamFilter("clientToken", args.ClientToken).
 		Do()
@@ -330,7 +329,8 @@ func (c *Client) ListEtChannelRouteRule(args *ListEtChannelRouteRuleArgs) (*List
 		WithURL(getURLForEtChannelRouteRule(args.EtId, args.EtChannelId)).
 		WithMethod(http.GET).
 		WithResult(result).
-		WithQueryParamFilter("marker", args.Marker)
+		WithQueryParamFilter("marker", args.Marker).
+		WithQueryParamFilter("destAddress", args.DestAddress)
 	if args.MaxKeys != 0 {
 		builder.WithQueryParamFilter("maxKeys", strconv.Itoa(args.MaxKeys))
 	}
@@ -371,10 +371,8 @@ func (c *Client) DeleteEtChannelRouteRule(args *DeleteEtChannelRouteRuleArgs) er
 	return bce.NewRequestBuilder(c).
 		WithURL(getURLForEtChannelRouteRuleId(args.EtId, args.EtChannelId, args.RouteRuleId)).
 		WithMethod(http.DELETE).
-		WithBody(args).
 		WithQueryParamFilter("clientToken", args.ClientToken).
 		Do()
-
 }
 
 // AssociateEtChannel - associate a specified EtChannel with the specified etChannelId
@@ -413,6 +411,86 @@ func (c *Client) DisAssociateEtChannel(args *DisAssociateEtChannelArgs) error {
 		WithMethod(http.PUT).
 		WithBody(args).
 		WithQueryParam("disassociate", "").
+		WithQueryParamFilter("clientToken", args.ClientToken).
+		Do()
+}
+
+// AddEtChannelUsers - add users to et channel
+//
+// PARAMS:
+//   - args: the arguments to add users
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) AddEtChannelUsers(args *AddEtChannelUsersArgs) error {
+	if args == nil {
+		return fmt.Errorf("the addEtChannelUsersArgs cannot be nil")
+	}
+	return bce.NewRequestBuilder(c).
+		WithURL(getURLForEtChannelId(args.EtId, args.EtChannelId)).
+		WithMethod(http.PUT).
+		WithBody(args).
+		WithQueryParam("addUsers", "").
+		WithQueryParamFilter("clientToken", args.ClientToken).
+		Do()
+}
+
+// RemoveEtChannelUsers - remove users from et channel
+//
+// PARAMS:
+//   - args: the arguments to remove users
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) RemoveEtChannelUsers(args *RemoveEtChannelUsersArgs) error {
+	if args == nil {
+		return fmt.Errorf("the removeEtChannelUsersArgs cannot be nil")
+	}
+	return bce.NewRequestBuilder(c).
+		WithURL(getURLForEtChannelId(args.EtId, args.EtChannelId)).
+		WithMethod(http.PUT).
+		WithBody(args).
+		WithQueryParam("removeUsers", "").
+		WithQueryParamFilter("clientToken", args.ClientToken).
+		Do()
+}
+
+// AddEtChannelRoutes - add routes to et channel
+//
+// PARAMS:
+//   - args: the arguments to add routes
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) AddEtChannelRoutes(args *AddEtChannelRoutesArgs) error {
+	if args == nil {
+		return fmt.Errorf("the addEtChannelRoutesArgs cannot be nil")
+	}
+	return bce.NewRequestBuilder(c).
+		WithURL(getURLForEtChannelId(args.EtId, args.EtChannelId)).
+		WithMethod(http.PUT).
+		WithBody(args).
+		WithQueryParam("addRoutes", "").
+		WithQueryParamFilter("clientToken", args.ClientToken).
+		Do()
+}
+
+// RemoveEtChannelRoutes - remove routes from et channel
+//
+// PARAMS:
+//   - args: the arguments to remove routes
+//
+// RETURNS:
+//   - error: nil if success otherwise the specific error
+func (c *Client) RemoveEtChannelRoutes(args *RemoveEtChannelRoutesArgs) error {
+	if args == nil {
+		return fmt.Errorf("the removeEtChannelRoutesArgs cannot be nil")
+	}
+	return bce.NewRequestBuilder(c).
+		WithURL(getURLForEtChannelId(args.EtId, args.EtChannelId)).
+		WithMethod(http.PUT).
+		WithBody(args).
+		WithQueryParam("removeRoutes", "").
 		WithQueryParamFilter("clientToken", args.ClientToken).
 		Do()
 }

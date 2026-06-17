@@ -442,3 +442,16 @@ func (c *Client) ResizeNatGateway(natId string, args *ResizeNatGatewayArgs) erro
 		WithQueryParamFilter("clientToken", args.ClientToken).
 		Do()
 }
+
+func (c *Client) UpdateNatReleaseProtectionSwitch(natId string, args *UpdateNatReleaseProtectionSwitchArgs) error {
+	if args == nil {
+		return fmt.Errorf("The UpdateNatReleaseProtectionSwitchArgs cannot be nil.")
+	}
+
+	return bce.NewRequestBuilder(c).
+		WithURL(getURLForNatId(natId) + "/deleteProtect").
+		WithMethod(http.PUT).
+		WithBody(args).
+		WithQueryParamFilter("clientToken", args.ClientToken).
+		Do()
+}

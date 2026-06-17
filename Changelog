@@ -1,5 +1,45 @@
 发行说明:记录每次SDK更新的说明,最新版本的SDK包含以前所有版本的更新内容。
 ---------------------------------------------------------------------
+【版本:v0.9.270】
+涉及产品：NAT
+    新增更新释放保护接口
+    查询NAT新增释放保护开关字段
+涉及产品：BOS
+    TeeReadNopCloser结构文件句柄泄漏问题修复
+涉及产品：ET
+    创建物理专线接口入参新增billing和autoRenew字段
+    查询专线列表接口响应新增linkDelay字段
+    查询专线详情接口响应新增linkDelay字段，Id字段的json映射由clientToken改为id
+    查询专线通道接口CustomerIpv6Address的json映射由首字母大写改为小写，新增bgpRouteLimit字段
+    更新专线通道接口请求body中新增bgpRouteLimit字段
+    重新提交专线通道接口请求body中CustomerIpv6Address的json映射由首字母大写改为小写
+    打开专线通道 IPv6接口请求body中CustomerIpv6Address的json映射由首字母大写改为小写
+    关闭专线通道 IPv6接口无请求body，sdk中调用了WithBody(args)，去除WithBody(args)
+    新增新增专线通道用户对象接口
+    新增移除专线通道用户对象接口
+    新增新增专线通道路由参数接口
+    新增移除专线通道路由参数接口
+    查询专线通道路由规则接口请求中新增destAddress查询参数，响应体中IsTrucated拼写错误
+    删除专线通道路由规则接口无请求body，sdk中调用了WithBody(args)，去除WithBody(args)
+涉及产品：SCS
+    创建实例接口新增参数模版、自动备份配置、部署集等参数，创建结果新增订单ID
+    查询实例列表支持按实例ID、内网IP过滤，实例列表与详情模型补充存储、网络、节点、部署集、订单状态等字段
+    查询实例详情补充慢日志、节点列表、代理列表、分片列表、完整版本、维护窗口、热key、功能开关、跨AZ就近访问入口和Sentinel命令兼容等字段
+    变更配置接口支持modifyMethod和replicationInfo参数
+    查询规格列表新增Pega集群规格列表，规格模型新增Pega磁盘容量范围字段
+    清空实例接口支持dbIndex、isFlushExpired、isDefer参数
+    参数查询结果新增type、range、module、desc字段
+    备份列表与记录补充recoverable、batchId、backupType、comment等字段，duration和objectSize调整为int64
+    备份策略支持加密配置，并新增获取备份策略、手动备份、删除手动备份、修改备份备注、获取备份用量信息接口
+    新增白名单分组查询、创建、修改、删除接口
+    新增多活实例组OpenAPI接口：前置检查、创建、列表、详情、删除、添加/移除子实例、改名、同步状态、延迟信息、修改BNSGroup
+    新增账号管理接口：账号列表、创建、删除、设置权限、修改密码
+    新增计费变更接口：后付费转预付费、预付费转后付费、取消预付费转后付费
+    新增主从切换、迁移可用区、IP变更接口
+    新增大版本升级、代理升级/重启接口
+    新增内存弹性扩缩配置的查询、设置、删除接口
+涉及产品：EO
+    修改离线日志接口文档说明、新增站点配置
 【版本:v0.9.269】
 涉及产品：HPAS
     购买新增cds数据盘参数

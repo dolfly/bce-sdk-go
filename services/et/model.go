@@ -67,17 +67,18 @@ type RecommitEtChannelResult struct {
 	EnableIpv6          uint32   `json:"enableIpv6"`
 	BaiduIpv6Address    string   `json:"baiduIpv6Address"`
 	Ipv6Networks        []string `json:"ipv6Networks"`
-	CustomerIpv6Address string   `json:"CustomerIpv6Address"`
+	CustomerIpv6Address string   `json:"customerIpv6Address"`
 }
 
 type UpdateEtChannelResult struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	Name          string `json:"name"`
+	Description   string `json:"description"`
+	BgpRouteLimit int    `json:"bgpRouteLimit"`
 }
 
 type EnableEtChannelIPv6Result struct {
 	BaiduIpv6Address    string   `json:"baiduIpv6Address"`
-	CustomerIpv6Address string   `json:"CustomerIpv6Address"`
+	CustomerIpv6Address string   `json:"customerIpv6Address"`
 	Ipv6Networks        []string `json:"ipv6Networks"`
 }
 
@@ -99,7 +100,8 @@ type EtChannelResult struct {
 	EnableIpv6          uint32   `json:"enableIpv6"`
 	BaiduIpv6Address    string   `json:"baiduIpv6Address"`
 	Ipv6Networks        []string `json:"ipv6Networks"`
-	CustomerIpv6Address string   `json:"CustomerIpv6Address"`
+	CustomerIpv6Address string   `json:"customerIpv6Address"`
+	BgpRouteLimit       int      `json:"bgpRouteLimit"`
 	SendInterval        int32    `json:"sendInterval"`
 	ReceivInterval      int32    `json:"receivInterval"`
 	DetectMultiplier    int32    `json:"detectMultiplier"`
@@ -107,19 +109,21 @@ type EtChannelResult struct {
 }
 
 type CreateEtDcphyArgs struct {
-	ClientToken string `json:"clientToken,omitempty"`
-	Name        string `json:"name"`
-	Description string `json:"description,omitempty"`
-	Isp         string `json:"isp"`
-	IntfType    string `json:"intfType"`
-	ApType      string `json:"apType"`
-	ApAddr      string `json:"apAddr"`
-	UserName    string `json:"userName"`
-	UserPhone   string `json:"userPhone"`
-	UserEmail   string `json:"userEmail"`
-	UserIdc     string `json:"userIdc"`
-	LinkDelay   int    `json:"linkDelay,omitempty"`
-	Tags        []Tag  `json:"tags"`
+	ClientToken string       `json:"clientToken,omitempty"`
+	Name        string       `json:"name"`
+	Description string       `json:"description,omitempty"`
+	Isp         string       `json:"isp"`
+	IntfType    string       `json:"intfType"`
+	ApType      string       `json:"apType"`
+	ApAddr      string       `json:"apAddr"`
+	UserName    string       `json:"userName"`
+	UserPhone   string       `json:"userPhone"`
+	UserEmail   string       `json:"userEmail"`
+	UserIdc     string       `json:"userIdc"`
+	LinkDelay   int          `json:"linkDelay,omitempty"`
+	Billing     *Billing     `json:"billing,omitempty"`
+	AutoRenew   *Reservation `json:"autoRenew,omitempty"`
+	Tags        []Tag        `json:"tags"`
 }
 
 type CreateEtDcphyResult struct {
@@ -164,6 +168,7 @@ type Et struct {
 	UserPhone   string `json:"userPhone"`
 	UserEmail   string `json:"userEmail"`
 	UserIdc     string `json:"userIdc"`
+	LinkDelay   int    `json:"linkDelay"`
 	Tags        []Tag  `json:"tags"`
 }
 
@@ -172,8 +177,18 @@ type Tag struct {
 	TagValue string `json:"tagValue"`
 }
 
+type Reservation struct {
+	ReservationLength   int    `json:"reservationLength,omitempty"`
+	ReservationTimeUnit string `json:"reservationTimeUnit,omitempty"`
+}
+
+type Billing struct {
+	PaymentTiming string       `json:"paymentTiming,omitempty"`
+	Reservation   *Reservation `json:"reservation,omitempty"`
+}
+
 type EtDcphyDetail struct {
-	Id          string `json:"clientToken,omitempty"`
+	Id          string `json:"id"`
 	Name        string `json:"name"`
 	Description string `json:"description"`
 	Status      string `json:"status"`
@@ -186,6 +201,7 @@ type EtDcphyDetail struct {
 	UserPhone   string `json:"userPhone"`
 	UserEmail   string `json:"userEmail"`
 	UserIdc     string `json:"userIdc"`
+	LinkDelay   int    `json:"linkDelay"`
 	Tags        []Tag  `json:"tags"`
 }
 
@@ -243,11 +259,11 @@ type ListEtChannelRouteRuleArgs struct {
 }
 
 type ListEtChannelRouteRuleResult struct {
-	Marker     string               `json:"marker"`
-	IsTrucated bool                 `json:"isTruncated"`
-	NextMarker string               `json:"nextMarker"`
-	MaxKeys    int                  `json:"maxKeys"`
-	RouteRules []EtChannelRouteRule `json:"routeRules"`
+	Marker      string               `json:"marker"`
+	IsTruncated bool                 `json:"isTruncated"`
+	NextMarker  string               `json:"nextMarker"`
+	MaxKeys     int                  `json:"maxKeys"`
+	RouteRules  []EtChannelRouteRule `json:"routeRules"`
 }
 
 type EtChannelRouteRule struct {
@@ -315,4 +331,36 @@ type DeleteEtChannelBfdRequest struct {
 	EtId        *string `json:"-"`
 	EtChannelId *string `json:"-"`
 	ClientToken *string `json:"-"`
+}
+
+type AddEtChannelUsersArgs struct {
+	ClientToken     string   `json:"clientToken,omitempty"`
+	EtId            string   `json:"-"`
+	EtChannelId     string   `json:"-"`
+	AuthorizedUsers []string `json:"authorizedUsers"`
+}
+
+type RemoveEtChannelUsersArgs struct {
+	ClientToken     string   `json:"clientToken,omitempty"`
+	EtId            string   `json:"-"`
+	EtChannelId     string   `json:"-"`
+	AuthorizedUsers []string `json:"authorizedUsers"`
+}
+
+type AddEtChannelRoutesArgs struct {
+	ClientToken  string   `json:"clientToken,omitempty"`
+	EtId         string   `json:"-"`
+	EtChannelId  string   `json:"-"`
+	RouteType    string   `json:"routeType"`
+	Networks     []string `json:"networks,omitempty"`
+	Ipv6Networks []string `json:"ipv6Networks,omitempty"`
+}
+
+type RemoveEtChannelRoutesArgs struct {
+	ClientToken  string   `json:"clientToken,omitempty"`
+	EtId         string   `json:"-"`
+	EtChannelId  string   `json:"-"`
+	RouteType    string   `json:"routeType"`
+	Networks     []string `json:"networks,omitempty"`
+	Ipv6Networks []string `json:"ipv6Networks,omitempty"`
 }

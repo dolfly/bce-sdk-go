@@ -277,3 +277,115 @@ func TestGetStatTopByGroup(t *testing.T) {
 	t.Logf("stat top by group: %s", string(data))
 	checkClientErr(t, "GetStatTopByGroup", err)
 }
+
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+// Test functions about site config.
+// //////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+// TestSetSiteConfig - set site config; SiteConfig is a unified container,
+// any subset of fields can be combined in a single request.
+func TestSetSiteConfig(t *testing.T) {
+	query := false
+	offlineMode := "ON"
+	httpToHttpsEnabled := "ON"
+	httpToHttpsCode := "302"
+	hstsMaxAge := 20
+	hstsIncludeSubDomains := true
+	hstsPreload := false
+	http2Disable := "OFF"
+	http3Enable := false
+	clientMaxBodySize := "500m"
+	compress := "ON"
+	isa := "ON"
+	grpcOrigin := "ON"
+	http2Origin := "ON"
+	result, err := testCli.SetSiteConfig(testAuthoritySite, &api.SiteConfig{
+		// 节点缓存配置
+		CacheTtl: &[]api.CacheTtl{
+			{
+				Value:          "/",
+				Weight:         100,
+				OverrideOrigin: true,
+				Ttl:            1,
+				Type:           "path",
+			},
+		},
+
+		// 查询字符串配置
+		CacheKey: &api.CacheKey{
+			Query:       &query,
+			IncludeArgs: &[]string{"test1"},
+		},
+
+		// 离线模式配置
+		OfflineMode: &offlineMode,
+
+		// 强制HTTPS配置
+		HttpToHttpsEnabled: &httpToHttpsEnabled,
+		HttpToHttpsCode:    &httpToHttpsCode,
+
+		// HSTS配置
+		Hsts: &api.HSTS{
+			MaxAge:            &hstsMaxAge,
+			IncludeSubDomains: &hstsIncludeSubDomains,
+			Preload:           &hstsPreload,
+		},
+
+		// HTTP2配置
+		Http2Disable: &http2Disable,
+
+		// HTTP3配置
+		Http3: &api.HTTP3{
+			Enable: &http3Enable,
+		},
+
+		// 最大上传大小配置
+		ClientMaxBodySize: &clientMaxBodySize,
+
+		// 页面压缩配置
+		Compress:            &compress,
+		CompressMethodArray: &[]string{"gzip", "br"},
+
+		// 智能加速配置
+		Isa: &isa,
+
+		//// 自定义HTTP头配置
+		HttpHeader: &[]api.HttpHeader{
+			{Type: "response", Header: "Cache-Control", Value: "test", Action: "add"},
+			{Type: "origin", Header: "Expires", Value: "test", Action: "add"},
+		},
+
+		// 状态码缓存配置
+		CacheCodeTtl: &[]api.CacheTtlCode{
+			{Value: "404", Weight: 100, OverrideOrigin: true, Ttl: 10, Type: "code"},
+			{Value: "400", Weight: 100, OverrideOrigin: true, Ttl: 10, Type: "code"},
+		},
+
+		// gRPC回源配置
+		GrpcOrigin: &grpcOrigin,
+
+		// HTTP2回源配置
+		Http2Origin: &http2Origin,
+	})
+
+	data, _ := json.Marshal(result)
+	t.Logf("setSiteConfig: %s", string(data))
+	checkClientErr(t, "SetSiteConfig", err)
+}
+
+// TestGetSiteConfig - query site config
+func TestGetSiteConfig(t *testing.T) {
+	cfg, err := testCli.GetSiteConfig(testAuthoritySite)
+
+	// 单测里若只关注某项，可单独打印
+	//data, _ := json.Marshal(cfg.CacheKey)
+	//if err != nil {
+	//	t.Logf("err:%+v\n", err)
+	//	return
+	//}
+	//t.Logf("cacheKey: %s", string(data))
+
+	data, _ := json.Marshal(cfg)
+	t.Logf("siteConfig: %s", string(data))
+	checkClientErr(t, "GetSiteConfig", err)
+}

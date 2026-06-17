@@ -27,6 +27,17 @@ func CreateEtDcphy() {
 		UserEmail:   "Your Email",          // 用户邮箱
 		UserIdc:     "Your Idc",            // 对端地址
 		LinkDelay:   100,                   // 端口延迟down时间，单位ms
+		Billing: &et.Billing{ // 计费信息，可选
+			PaymentTiming: "Prepaid",
+			Reservation: &et.Reservation{
+				ReservationLength:   1,
+				ReservationTimeUnit: "month",
+			},
+		},
+		AutoRenew: &et.Reservation{ // 自动续费信息，可选
+			ReservationLength:   1,
+			ReservationTimeUnit: "month",
+		},
 		Tags: []et.Tag{{
 			TagKey:   "Your TagKey",
 			TagValue: "Your TagValue",

@@ -252,6 +252,7 @@ args := &scs.CreateInstanceArgs{
 	// 私有网络VPCID，可不传。不传时自动指定为默认vpcId，子网为默认子网；若指定了vpcId，则需要指定Subnets字段
     VpcID:          "vpc-3mrcjz05yjkr",
 	// 子网信息。ZoneName：可用区，SubnetID：子网ID。
+	// Deprecated: 该字段已废弃，请使用 ReplicationInfo 替代
 	// 如果指定了VpcID，则该字段必传；如果不指定VpcID，该字段不传
     Subnets: []scs.Subnet{
         {
@@ -276,6 +277,7 @@ args := &scs.CreateInstanceArgs{
         },
     },
     // 副本个数，单副本为1，双副本为2，多副本依此类推，副本数不能超过10
+    // Deprecated: 该字段已废弃，请使用 ReplicationInfo 替代
 	ReplicationNum:  1,
     // 分片个数
 	ShardNum:      1,
@@ -285,8 +287,31 @@ args := &scs.CreateInstanceArgs{
     StoreType: 0,
     // 副本只读 1打开 2关闭 （PegaDB专用）
     // EnableReadOnly: 1,
+    // 参数模版ID，可不传
+    // ConfTpl: "",
     // 资源分组ID，可不传
     ResourceGroupId: "",
+    // blb专属集群Id，可不传，不传默认为共享集群
+    // BgwGroupId: "",
+    // 幂等性Token，是一个长度不超过64位的ASCII字符串
+    // ClientToken: "client-token-xxx",
+    // 密码，长度8～16位，至少包含字母、数字和特殊字符中两种
+    // 密码需要加密传输，SDK会自动处理加密
+    // ClientAuth: "your-password",
+    // BCM实例分组信息，可不传
+    // BcmInstanceGroups: []scs.BcmInstanceGroupRequest{
+    //     {
+    //         GroupIds:          "group-id-xxx",
+    //         GroupResourceType: "resource-type-xxx",
+    //     },
+    // },
+    // 备份配置，格式："${备份周期};${备份时间};${备份时长}"，可不传
+    // 备份周期取值：Mon,Tue,Wed,Thu,Fri,Sta,Sun
+    // 备份时间为UTC时间，如16:00:00
+    // 备份时长：取值1-15
+    // AutoBackupConfig: "Tue,Wed,Thu,Fri,Sta,Sun,Mon;16:20:01;5",
+    // 部署集ID列表，可不传，建议仅传一个部署集ID
+    // DeployIdList: []string{"deploy-id-xxx"},
 	// 标签，该值可不传。
 	// 如果传该值，则指定需要绑定的标签，如果该标签不存在，则自动生成新标签
     Tags: []model.TagModel{
@@ -316,7 +341,8 @@ result, err := client.CreateInstance(args)
 if err != nil {
     fmt.Println("create instance failed:", err)
 } else {
-    fmt.Println("create instance success: ", result)
+    fmt.Println("create instance success: ", result.InstanceIds)
+    fmt.Println("order id: ", result.OrderId)
 }
 ```
 
@@ -334,7 +360,16 @@ if err != nil {
 
 以下代码可以查询SCS实例列表
 ```go
-args := &scs.ListInstancesArgs{}
+args := &scs.ListInstancesArgs{
+    // 批量获取列表的查询的起始位置，是一个由系统生成的字符串
+    Marker: "",
+    // 每页包含的最大数量，最大数量通常不超过1000，缺省值为1000
+    MaxKeys: 1000,
+    // 集群ID查询，支持多个实例ID，以英文逗号分隔
+    // InstanceIds: "scs-bj-xxx,scs-bj-yyy",
+    // 内网IP查询
+    // VnetIp: "10.0.0.1",
+}
 
 result, err := client.ListInstances(args)
 if err != nil {
@@ -426,7 +461,7 @@ if err != nil {
 > -   释放单个SCS实例，释放后实例将进入回收站，保留7天后自动删除所有物理资源。
 > -   可以从回收站内恢复实例或者彻底删除实例,预付费实例需要通过续费实例接口进行恢复。
 
-## 重启实例
+### 重启实例
 
 使用以下代码可以重启实例。支持用户决定是否在维护时间窗口内重启。
 
@@ -444,7 +479,7 @@ if err != nil {
 }
 ```
 
-## 续费实例
+### 续费实例
 使用以下代码可以对已有的预付费实例进行续费,如果实例在回收站中,续费后会从回收站中恢复。
 ```go
 
@@ -467,7 +502,7 @@ if err != nil {
 fmt.Println("renew instances success. orderId:" + result.OrderId)
 ```
 
-## 获取回收站中的实例列表
+### 获取回收站中的实例列表
 使用以下代码可以获取回收站中的实例列表。
 ```go
 
@@ -498,7 +533,7 @@ for _, instance := range instances.Result {
 }
 ```
 
-## 从回收站中批量恢复实例
+### 从回收站中批量恢复实例
 使用以下代码可以从回收站中批量恢复实例,批量恢复仅支持后付费实例,回收站中的预付费实例请通过实例续费接口恢复。
 ```go
 
@@ -515,7 +550,7 @@ if err != nil {
 fmt.Println("recover recycler instances success.")
 ```
 
-## 从回收站中批量删除实例
+### 从回收站中批量删除实例
 使用以下代码可以从回收站中批量删除实例,实例将被彻底删除。
 ```go
 
@@ -576,10 +611,19 @@ if err != nil {
 
 ```go
 args := &scs.ResizeInstanceArgs{
+	// 节点规格。NodeType和ShardNum同时仅支持变更一个参数
     NodeType:"cache.n1.small",
+	// 分片个数
     ShardNum:2,
     // 需要延迟到维护窗口变配时需传入true
     IsDefer: false,
+    // 标准版升级集群版时传入modifyType
+    ModifyMethod: "modifyType",
+    // 标准版升级集群版时支持变更副本
+    ReplicationInfo: []scs.Replication{
+        {AvailabilityZone: "cn-bj-a", SubnetId: "sbn-fh56wbtv1ycw", IsMaster: 1},
+        {AvailabilityZone: "cn-bj-a", SubnetId: "sbn-fh56wbtv1ycw", IsMaster: 0},
+    },
 }
 err := client.ResizeInstance(instanceId, args)
 if err != nil {
@@ -711,7 +755,14 @@ if err != nil {
 
 ```go
 args := &scs.FlushInstanceArgs{
-    Password:  "Password",
+    // 实例密码；如果没有设置密码，传递空字符串
+    Password: "Password",
+    // 数据库索引，取值范围[0,255]，可不传
+    DbIndex: 0,
+    // true表示只清理过期数据，false表示清理所有数据，可不传
+    IsFlushExpired: false,
+    // 维护时间窗口执行，仅IsFlushExpired=true时可用；true表示维护时间执行，false表示立即执行，可不传
+    IsDefer: false,
 }
 result, err := client.FlushInstance(instanceId, args)
 if err != nil {
@@ -801,6 +852,162 @@ if err != nil {
     fmt.Println("set as slave success ", result)
 }
 ```
+
+### 主从切换
+
+如下代码可以指定分片进行主从切换，保障实例高可用性。`hashName` 和 `nodeShowId` 可从实例详情接口的 `RedisList` 字段中获取
+
+```go
+args := &scs.SwitchMasterSlaveArgs{
+    Shards: []scs.SwitchMasterSlaveShard{
+        {
+            HashName:   "scs-bj-elahimuhxjia-0",
+            NodeShowID: "scs-bj-elahimuhxjia_redis_67957_1",
+        },
+    },
+}
+err := client.SwitchMasterSlave(instanceId, args)
+if err != nil {
+    fmt.Println("switch master slave failed:", err)
+} else {
+    fmt.Println("switch master slave success")
+}
+```
+
+### 迁移可用区
+
+如下代码可以将实例迁移到同地域内的其它可用区、子网。不支持热活实例组、多活实例组、只读节点，开通公网或有待执行维护窗口任务的实例也不支持
+
+```go
+args := &scs.MigrateAvailabilityZoneArgs{
+    // 是否维护时间内执行，true 维护时间执行，false 立即执行
+    IsDefer: true,
+    // 全量副本信息，可以修改可用区和子网，主节点有且仅有一个
+    ReplicationInfo: []scs.Replication{
+        {AvailabilityZone: "cn-bj-a", SubnetId: "sbn-x94w3r601111", IsMaster: 1},
+        {AvailabilityZone: "cn-bj-b", SubnetId: "sbn-x94w3r602222", IsMaster: 0},
+    },
+}
+err := client.MigrateAvailabilityZone(instanceId, args)
+if err != nil {
+    fmt.Println("migrate availability zone failed:", err)
+} else {
+    fmt.Println("migrate availability zone success")
+}
+```
+
+### IP 变更
+
+如下代码可以变更实例的内网 IP。变更生效后会断开旧地址的网络连接，请确保业务使用连接地址（域名）连接实例，并具备断线重连机制
+
+```go
+args := &scs.ModifyEntranceArgs{
+    // 是否维护时间内执行，true 维护时间执行，false 立即执行
+    IsDefer: true,
+}
+err := client.ModifyEntrance(instanceId, args)
+if err != nil {
+    fmt.Println("modify entrance failed:", err)
+} else {
+    fmt.Println("modify entrance success")
+}
+```
+
+### 大版本升级
+
+如下代码可以升级实例的内核大版本。3 系可升 6/7 系，4 系可升 6/7 系，5 系可升 6/7 系，6 系可升 7 系
+
+```go
+args := &scs.UpgradeVersionArgs{
+    // 升级大版本时的目标版本号，必须高于当前版本；非大版本升级时留空
+    KernelVersion: "7.0",
+    // 执行时间，false 立即执行，true 维护时间内执行
+    IsDefer: false,
+}
+err := client.UpgradeVersion(instanceId, args)
+if err != nil {
+    fmt.Println("upgrade version failed:", err)
+} else {
+    fmt.Println("upgrade version success")
+}
+```
+
+### 代理版本升级或重启
+
+如下代码可以升级实例的代理版本或批量重启代理。`upgradeType` 取值：`latest` 升级 proxy 版本；`relaunch` 重启 proxy。重启任务时需把待重启的 proxy showId 填到 `ProxyList` 中
+
+```go
+// 示例：升级 proxy 到最新版本
+args := &scs.UpgradeProxyArgs{
+    ProxyList:   []string{},
+    UpgradeType: "latest",
+    IsDefer:     true,
+}
+err := client.UpgradeProxy(instanceId, args)
+if err != nil {
+    fmt.Println("upgrade proxy failed:", err)
+} else {
+    fmt.Println("upgrade proxy success")
+}
+```
+
+### 查询内存弹性扩缩配置
+
+如下代码可以查看实例的内存弹性扩缩配置，目前仅标准版实例支持
+
+```go
+result, err := client.GetAutoScalingConfig(instanceId)
+if err != nil {
+    fmt.Println("get auto scaling config failed:", err)
+} else {
+    fmt.Println("get auto scaling config success ", result)
+}
+```
+
+### 设置内存弹性扩缩配置
+
+如下代码可以设置实例的内存弹性扩缩配置，目前仅标准版实例支持
+
+```go
+args := &scs.AutoScalingConfigResult{
+    MemSpec: &scs.MemAutoScalingConfig{
+        // 扩容触发阈值，70/80/90
+        MemUsageUpperThreshold: 80,
+        // 缩容触发阈值，20/30/40
+        MemUsageDownThreshold: 30,
+        // 扩容规格上限
+        MaxNodeType: "cache.n1.large",
+        // 缩容规格下限
+        MinNodeType: "cache.n1.small",
+        // 扩容观测窗口，取值 1m/3m/5m/10m/15m/30m
+        ObservationWindowSizeForUpper: "5m",
+        // 缩容观测窗口，取值 5m/10m/15m/30m
+        ObservationWindowSizeForDown: "10m",
+    },
+}
+err := client.SetAutoScalingConfig(instanceId, args)
+if err != nil {
+    fmt.Println("set auto scaling config failed:", err)
+} else {
+    fmt.Println("set auto scaling config success")
+}
+```
+
+### 删除内存弹性扩缩配置
+
+如下代码可以删除实例的内存弹性扩缩配置，目前仅标准版实例支持
+
+```go
+err := client.DeleteAutoScalingConfig(instanceId)
+if err != nil {
+    fmt.Println("delete auto scaling config failed:", err)
+} else {
+    fmt.Println("delete auto scaling config success")
+}
+```
+
+## 安全管理
+
 ### 查询IP白名单
 
 如下代码可以查询允许访问实例的IP白名单
@@ -854,7 +1061,68 @@ if err != nil {
 }
 ```
 
-## 获取VPC下的安全组
+### 查询白名单分组
+
+如下代码可以查询实例白名单分组，groupName 为空时查询全部分组
+
+```go
+result, err := client.GetWhiteListGroup(instanceId, "")
+if err != nil {
+    fmt.Println("get white list group failed:", err)
+} else {
+    fmt.Println("get white list group success ", result)
+}
+```
+
+### 创建白名单分组
+
+如下代码可以创建实例白名单分组
+
+```go
+args := &scs.WhiteListGroupArgs{
+    GroupName:     "default",
+    ClusterIPList: []string{"192.168.0.1", "192.168.1.0/24"},
+}
+err := client.CreateWhiteListGroup(instanceId, args)
+if err != nil {
+    fmt.Println("create white list group failed:", err)
+} else {
+    fmt.Println("create white list group success")
+}
+```
+
+### 修改白名单分组
+
+如下代码可以修改实例白名单分组
+
+```go
+args := &scs.WhiteListGroupArgs{
+    GroupName:     "default",
+    NewGroupName:  "new-default",
+    ClusterIPList: []string{"192.168.0.1", "192.168.1.0/24"},
+}
+err := client.ModifyWhiteListGroup(instanceId, args)
+if err != nil {
+    fmt.Println("modify white list group failed:", err)
+} else {
+    fmt.Println("modify white list group success")
+}
+```
+
+### 删除白名单分组
+
+如下代码可以删除实例白名单分组
+
+```go
+err := client.DeleteWhiteListGroup(instanceId, "default")
+if err != nil {
+    fmt.Println("delete white list group failed:", err)
+} else {
+    fmt.Println("delete white list group success")
+}
+```
+
+### 获取VPC下的安全组
 使用以下代码可以获取指定VPC下的安全组列表。
 ```go
 
@@ -879,7 +1147,7 @@ for _, group := range securityGroups.Groups {
 fmt.Println("list security group by vpcId success.")
 ```
 
-## 获取实例已绑定安全组
+### 获取实例已绑定安全组
 使用以下代码可以获取指定实例已绑定的安全组列表。
 ```go
 
@@ -891,6 +1159,7 @@ if err != nil {
 }
 for _, group := range result.Groups {
     fmt.Println("securityGroupId: ", group.SecurityGroupID)
+    fmt.Println("securityGroupUuid: ", group.SecurityGroupUuid)
     fmt.Println("securityGroupName: ", group.SecurityGroupName)
     fmt.Println("securityGroupRemark: ", group.SecurityGroupRemark)
     fmt.Println("projectId: ", group.ProjectID)
@@ -899,10 +1168,11 @@ for _, group := range result.Groups {
     fmt.Println("inbound: ", group.Inbound)
     fmt.Println("outbound: ", group.Outbound)
 }
+fmt.Println("activeRules: ", result.ActiveRules)
 fmt.Println("list security group by instanceId success.")
 ```
 
-## 绑定安全组
+### 绑定安全组
 使用以下代码可以批量将指定的安全组绑定到实例上。实例已经绑定过的安全组不能重复绑定。
 ```go
 
@@ -930,7 +1200,7 @@ fmt.Println("bind security groups to instances success.")
 > - 安全组ID最多可以传入10个。
 > - 每个实例最多可以绑定10个安全组。
 
-## 解绑安全组
+### 解绑安全组
 使用以下代码可以从实例上批量解绑指定的安全组。
 ```go
 // securityGroupIds := []string{
@@ -951,6 +1221,8 @@ fmt.Println("unbind security groups to instances success.")
 > - 实例状态必须为Available。
 > - 当前版本实例ID最多可以传入1个。
 > - 安全组ID最多可以传入10个。
+
+## 参数管理
 
 ### 获取参数列表
 
@@ -984,6 +1256,8 @@ if err != nil {
 }
 ```
 
+## 备份管理
+
 ### 查看备份列表
 
 使用以下代码可以查询某个实例备份列表
@@ -996,6 +1270,78 @@ if err != nil {
     fmt.Println("get backup list success ", result)
 }
 ```
+
+### 获取备份策略
+
+使用以下代码可以查询某个实例的备份策略
+
+```go
+result, err := client.GetBackupPolicy(instanceId)
+if err != nil {
+    fmt.Println("get backup policy failed:", err)
+} else {
+    fmt.Println("get backup policy success ", result)
+}
+```
+
+### 手动备份
+
+使用以下代码可以对某个实例发起手动备份
+
+```go
+args := &scs.BackupCommentArgs{
+    Comment: "manual backup",
+}
+err := client.CreateBackup(instanceId, args)
+if err != nil {
+    fmt.Println("create backup failed:", err)
+} else {
+    fmt.Println("create backup success")
+}
+```
+
+### 删除手动备份
+
+使用以下代码可以删除某个实例的手动备份，自动备份不支持删除
+
+```go
+err := client.DeleteBackup(instanceId, batchId)
+if err != nil {
+    fmt.Println("delete backup failed:", err)
+} else {
+    fmt.Println("delete backup success")
+}
+```
+
+### 修改备份备注
+
+使用以下代码可以修改某个备份的备注
+
+```go
+args := &scs.BackupCommentArgs{
+    Comment: "new backup comment",
+}
+err := client.ModifyBackupComment(instanceId, batchId, args)
+if err != nil {
+    fmt.Println("modify backup comment failed:", err)
+} else {
+    fmt.Println("modify backup comment success")
+}
+```
+
+### 获取备份用量信息
+
+使用以下代码可以获取某个实例的备份用量信息
+
+```go
+result, err := client.GetBackupUsage(instanceId)
+if err != nil {
+    fmt.Println("get backup usage failed:", err)
+} else {
+    fmt.Println("get backup usage success ", result)
+}
+```
+
 ### 获取备份信息
 
 使用以下代码可以获取某个实例备份信息
@@ -1017,6 +1363,7 @@ args := &scs.ModifyBackupPolicyArgs{
 				BackupDays: "Sun,Mon,Tue,Wed,Thu,Fri,Sta",
 				BackupTime: "01:05:00",
 				ExpireDay: 7,
+				IsEncrypt: "no",
 }
 result, err := client.ModifyBackupPolicy(instanceId, args)
 if err != nil {
@@ -1031,10 +1378,11 @@ if err != nil {
 > - BackupDays: 标识一周中哪几天进行备份备份周期：Mon（周一）Tue（周二）Wed（周三）Thu（周四）Fri（周五）Sat（周六）Sun（周日）逗号分隔，取值如：Sun,Wed,Thu,Fri,Sta
 > - BackupTime: 标识一天中何时进行备份，UTC时间（+8为北京时间）取值如：01:05:00
 > - ExpireDay: 备份文件过期时间，取值如：3
+> - IsEncrypt: 是否开启备份加密，no 不开启，yes 开启
 
-# 日志管理
+## 日志管理
 
-## 日志列表
+### 日志列表
 使用以下代码可以获取一个实例下的运行日志或者慢日志列表。
 ```go
 // import "time"
@@ -1072,7 +1420,7 @@ for _, shardLog := range listLogResult.LogList {
 }
 ```
 
-## 日志详情
+### 日志详情
 使用以下代码可以查询日志的详细信息，包括该日志文件有效的下载链接。
 ```go
 args := &GetLogArgs{
@@ -1093,8 +1441,8 @@ fmt.Println("download url: ", log.DownloadURL)
 fmt.Println("download url expires: ", log.DownloadExpires)
 ```
 
-# 维护窗口
-## 查询实例的维护时间窗口
+## 维护窗口
+### 查询实例的维护时间窗口
 使用以下代码可以查询实例的维护时间窗口。
 ```go
 resp, err := client.GetMaintainTime(instanceId)
@@ -1112,7 +1460,7 @@ fmt.Println("period: ", resp.MaintainTime.Period)
 >
 > - startTime 为北京时间24小时制，例如14:00。
 
-## 修改实例的维护时间窗口
+### 修改实例的维护时间窗口
 使用以下代码可以修改实例的维护时间窗口。
 ```go
 newMaintainTime := &scs.MaintainTime{
@@ -1128,9 +1476,9 @@ if err != nil {
 fmt.Println("modify maintainTime success.")
 ```
 
-# 热活实例组
+## 热活实例组
 
-## 前置检查
+### 前置检查
 热活实例组前置检查，检查数据配置及网络联通性，不通过检查不能创建。
 ```go
 args := &scs.GroupPreCheckArgs{
@@ -1154,7 +1502,7 @@ fmt.Println("group pre check success.")
 data, _ := json.Marshal(result)
 fmt.Println(string(data))
 ```
-## 创建热活实例组
+### 创建热活实例组
 创建热活实例组
 ```go
 args := &scs.CreateGroupArgs{
@@ -1173,7 +1521,7 @@ fmt.Println("create group success.")
 data, _ := json.Marshal(result)
 fmt.Println(string(data))
 ```
-## 获取热活实例组列表
+### 获取热活实例组列表
 获取热活实例组列表
 ```go
 args := &scs.GetGroupListArgs{
@@ -1189,7 +1537,7 @@ fmt.Println("get group list success.")
 data, _ := json.Marshal(result)
 fmt.Println(string(data))
 ```
-## 获取热活实例组详情
+### 获取热活实例组详情
 获取热活实例组详情
 ```go
 result, err := client.GetGroupDetail(groupId)
@@ -1202,7 +1550,7 @@ data, _ := json.Marshal(result)
 fmt.Println(string(data))
 ```
 
-## 释放热活实例组
+### 释放热活实例组
 释放热活实例组
 ```go
 err := client.DeleteGroup(groupId)
@@ -1213,7 +1561,7 @@ if err != nil {
 fmt.Println("delete group success.")
 ```
 
-## 热活实例组添加从集群
+### 热活实例组添加从集群
 ```go
 args := &scs.FollowerInfo{
     FollowerId:     "scs-bdbl-dzkqigawuhzy",
@@ -1227,7 +1575,7 @@ if err != nil {
 }
 fmt.Println("group add follower success.")
 ```
-## 热活实例组移除从集群
+### 热活实例组移除从集群
 ```go
 
 err := client.GroupRemoveFollower(groupId, instanceId)
@@ -1237,7 +1585,7 @@ if err != nil {
 }
 fmt.Println("group remove follower success.")
 ```
-## 修改热活实例组名称
+### 修改热活实例组名称
 ```go
 args := &scs.roupNameArgs{
     GroupName: "test_group",
@@ -1249,7 +1597,7 @@ if err != nil {
 }
 fmt.Println("update group name success.")
 ```
-## 变更主角色
+### 变更主角色
 ```go
 err := client.SetAsLeader(groupId, instanceId)
 if err != nil {
@@ -1258,7 +1606,7 @@ if err != nil {
 }
 fmt.Println("set as leader success.")
 ```
-## 实例组禁写修改
+### 实例组禁写修改
 ```go
 args := &scs.ForbidWriteArgs{
     ForbidWriteFlag: true,
@@ -1270,7 +1618,7 @@ if err != nil {
 }
 fmt.Println("update forbid write success.")
 ```
-## 设置流控规则
+### 设置流控规则
 ```go
 args := &scs.GroupSetQpsArgs{
     ClusterShowId: "scs-bj-bftgjzjxbmex",
@@ -1284,7 +1632,7 @@ if err != nil {
 }
 fmt.Println("group set qps success.")
 ```
-## 获取从角色同步状态
+### 获取从角色同步状态
 ```go
 result, err := client.GroupSyncStatus(groupId)
 if err != nil {
@@ -1295,7 +1643,7 @@ fmt.Println("group sync status success.")
 data, _ := json.Marshal(result)
 fmt.Println(string(data))
 ```
-## 获取IP白名单列表
+### 获取IP白名单列表
 ```go
 result, err := client.GroupWhiteList(groupId)
 if err != nil {
@@ -1306,7 +1654,7 @@ fmt.Println("group white list success.")
 data, _ := json.Marshal(result)
 fmt.Println(string(data))
 ```
-## 添加IP白名单
+### 添加IP白名单
 ```go
 args := &scs.GroupWhiteList{
     WhiteLists: []string{"127.0.0.1"},
@@ -1318,7 +1666,7 @@ if err != nil {
 }
 fmt.Println("group white add success.")
 ```
-## 删除IP白名单
+### 删除IP白名单
 ```go
 args := &scs.GroupWhiteList{
     WhiteLists: []string{"127.0.0.1"},
@@ -1331,7 +1679,7 @@ if err != nil {
 fmt.Println("group white delete success.")
 ```
 
-## 设置从角色脏读
+### 设置从角色脏读
 ```go
 args := &scs.taleReadableArgs{
     FollowerId:    SCS_TEST_ID,
@@ -1345,8 +1693,170 @@ if err != nil {
 fmt.Println("groupstale readable success.")
 ```
 
-# 参数模板管理
-## 创建参数模板
+## 多活实例组 OpenAPI
+
+### 多活实例组前置检查
+
+如下代码可以对创建多活实例组进行前置检查
+
+```go
+args := &scs.SyncGroupCheckRequest{
+    Members: []scs.SyncGroupMember{
+        {MemberId: "scs-bj-xxx", Region: "bj"},
+        {MemberId: "scs-gz-xxx", Region: "gz"},
+    },
+}
+result, err := client.SyncGroupPreCheck(args)
+if err != nil {
+    fmt.Printf("sync group precheck error: %+v\n", err)
+    return
+}
+fmt.Println("sync group precheck success ", result)
+```
+
+### 创建多活实例组
+
+如下代码可以创建多活实例组
+
+```go
+args := &scs.SyncGroupCreateRequest{
+    SyncGroupName: "scs-sync-group",
+    Members: []scs.SyncGroupMember{
+        {MemberId: "scs-bj-xxx", Region: "bj"},
+        {MemberId: "scs-gz-xxx", Region: "gz"},
+    },
+}
+result, err := client.CreateSyncGroup(args)
+if err != nil {
+    fmt.Printf("create sync group error: %+v\n", err)
+    return
+}
+fmt.Println("create sync group success ", result)
+```
+
+### 获取多活实例组列表
+
+如下代码可以分页获取多活实例组列表
+
+```go
+result, err := client.ListSyncGroup(1, 10)
+if err != nil {
+    fmt.Printf("list sync group error: %+v\n", err)
+    return
+}
+fmt.Println("list sync group success ", result)
+```
+
+### 获取多活实例组详情
+
+如下代码可以获取多活实例组详情
+
+```go
+result, err := client.GetSyncGroupDetail("scs-group-xxx")
+if err != nil {
+    fmt.Printf("get sync group detail error: %+v\n", err)
+    return
+}
+fmt.Println("get sync group detail success ", result)
+```
+
+### 删除多活实例组
+
+如下代码可以删除多活实例组
+
+```go
+err := client.DeleteSyncGroup("scs-group-xxx")
+if err != nil {
+    fmt.Printf("delete sync group error: %+v\n", err)
+    return
+}
+fmt.Println("delete sync group success")
+```
+
+### 多活实例组移除子实例
+
+如下代码可以从多活实例组中移除子实例
+
+```go
+args := &scs.SyncGroupMember{MemberId: "scs-bj-xxx", Region: "bj"}
+err := client.RemoveSyncGroupCluster("scs-group-xxx", args)
+if err != nil {
+    fmt.Printf("remove sync group cluster error: %+v\n", err)
+    return
+}
+fmt.Println("remove sync group cluster success")
+```
+
+### 多活实例组添加子实例
+
+如下代码可以向多活实例组中添加子实例
+
+```go
+args := &scs.SyncGroupMember{MemberId: "scs-bj-xxx", Region: "bj"}
+err := client.AddSyncGroupCluster("scs-group-xxx", args)
+if err != nil {
+    fmt.Printf("add sync group cluster error: %+v\n", err)
+    return
+}
+fmt.Println("add sync group cluster success")
+```
+
+### 修改多活实例组名称
+
+如下代码可以修改多活实例组名称
+
+```go
+args := &scs.SyncGroupRenameArgs{GroupName: "new-group-name"}
+err := client.ModifySyncGroupName("scs-group-xxx", args)
+if err != nil {
+    fmt.Printf("modify sync group name error: %+v\n", err)
+    return
+}
+fmt.Println("modify sync group name success")
+```
+
+### 获取多活实例组同步状态
+
+如下代码可以获取多活实例组同步状态
+
+```go
+result, err := client.GetSyncGroupStatus("scs-group-xxx")
+if err != nil {
+    fmt.Printf("get sync group status error: %+v\n", err)
+    return
+}
+fmt.Println("get sync group status success ", result)
+```
+
+### 多活组延迟信息
+
+如下代码可以获取多活组延迟信息
+
+```go
+result, err := client.GetSyncGroupDelayInfo("scs-group-xxx")
+if err != nil {
+    fmt.Printf("get sync group delay info error: %+v\n", err)
+    return
+}
+fmt.Println("get sync group delay info success ", result)
+```
+
+### 修改多活实例组的 BNSGroup
+
+如下代码可以修改多活实例组的 BNSGroup
+
+```go
+args := &scs.SyncGroupBnsGroupArgs{BnsGroup: "bns-group-name"}
+err := client.ModifySyncGroupBnsGroup("scs-group-xxx", args)
+if err != nil {
+    fmt.Printf("modify sync group bns group error: %+v\n", err)
+    return
+}
+fmt.Println("modify sync group bns group success")
+```
+
+## 参数模板管理
+### 创建参数模板
 ```go
 
 args := &scs.CreateTemplateArgs{
@@ -1375,7 +1885,7 @@ fmt.Println(string(data))
 fmt.Println("create params template success.")
 ```
 
-## 获取参数模版列表
+### 获取参数模版列表
 ```go
 
 args := &Marker{
@@ -1391,7 +1901,7 @@ data, _ := json.Marshal(result)
 fmt.Println(string(data))
 fmt.Println("get params template success.")
 ```
-## 获取参数模版详情
+### 获取参数模版详情
 ```go
 result, err := client.GetParamsTemplateDetail("scs-tmpl-vxslemqppzuz")
 if err != nil {
@@ -1402,7 +1912,7 @@ data, _ := json.Marshal(result)
 fmt.Println(string(data))
 fmt.Println("get params template detail success.")
 ```
-## 删除参数模板
+### 删除参数模板
 ```go
 err := client.DeleteParamsTemplate("scs-tmpl-vxslemqppzuz")
 if err != nil {
@@ -1413,7 +1923,7 @@ fmt.Println("delete params template success.")
 ```
 
 
-## 修改参数模板名称
+### 修改参数模板名称
 ```go
 args := &scs.RenameTemplateArgs{
     Name: "scs-test-template",
@@ -1426,7 +1936,7 @@ if err != nil {
 fmt.Println("rename params template success.")
 ```
 
-## 应用参数模板
+### 应用参数模板
 ```go
 args := &ApplyTemplateArgs{
     RebootType: 0,
@@ -1453,7 +1963,7 @@ if err != nil {
 }
 fmt.Println("apply params template success.")
 ```
-## 参数模版添加参数
+### 参数模版添加参数
 ```go
 args := &scs.AddParamsArgs{
     Parameters: []ParameterItem{
@@ -1472,7 +1982,7 @@ if err != nil {
 }
 fmt.Println("add params template success.")
 ```
-## 参数模版修改参数
+### 参数模版修改参数
 ```go
 args := &scs.ModifyParamsArgs{
     Parameters: []ParameterItem{
@@ -1491,7 +2001,7 @@ if err != nil {
 }
 fmt.Println("modify params template success.")
 ```
-## 参数模版删除参数
+### 参数模版删除参数
 ```go
 args := &scs.DeleteParamsArgs{
     Parameters: []string{"appendonly"},
@@ -1504,7 +2014,7 @@ if err != nil {
 fmt.Println("template delete params success.")
 ```
 
-## 获取系统参数模板
+### 获取系统参数模板
 ```go
 args := &scs.GetSystemTemplateArgs{
     Engine:        "redis",
@@ -1520,7 +2030,7 @@ data, _ := json.Marshal(result)
 fmt.Println(string(data))
 fmt.Println("get system template success.")
 ```
-## 获取应用参数模版记录
+### 获取应用参数模版记录
 ```go
 args := &scs.Marker{
     Marker:  "-1",
@@ -1535,6 +2045,149 @@ data, _ := json.Marshal(result)
 fmt.Println(string(data))
 fmt.Println("get apply record success.")
 ```
+## 账号管理
+
+### 查询账号列表
+
+如下代码可以查询实例下的账号列表
+
+```go
+result, err := client.ListAclUsers(instanceId)
+if err != nil {
+    fmt.Println("list acl users failed:", err)
+} else {
+    fmt.Println("list acl users success ", result)
+}
+```
+
+### 创建账号
+
+如下代码可以创建集群账号，密码需要加密传输，SDK 会自动处理加密
+
+```go
+args := &scs.AclUserCreateArgs{
+    UserName:   "name",
+    ClientAuth: "your-password",
+    Extra:      "",
+    UserType:   2,
+}
+err := client.CreateAclUser(instanceId, args)
+if err != nil {
+    fmt.Println("create acl user failed:", err)
+} else {
+    fmt.Println("create acl user success")
+}
+```
+
+### 删除账号
+
+如下代码可以删除指定账号
+
+```go
+args := &scs.AclUserDeleteArgs{UserName: "name"}
+err := client.DeleteAclUser(instanceId, args)
+if err != nil {
+    fmt.Println("delete acl user failed:", err)
+} else {
+    fmt.Println("delete acl user success")
+}
+```
+
+### 设置权限
+
+如下代码可以设置指定账号的权限，`userType` 取值：1 读写，2 只读
+
+```go
+args := &scs.AclUserCreateArgs{
+    UserName: "name",
+    UserType: 2,
+}
+err := client.SetAclUserAuthority(instanceId, args)
+if err != nil {
+    fmt.Println("set acl user authority failed:", err)
+} else {
+    fmt.Println("set acl user authority success")
+}
+```
+
+### 修改账号密码
+
+如下代码可以修改非 default 账号的密码，密码需要加密传输，SDK 会自动处理加密
+
+```go
+args := &scs.AclUserPasswordArgs{
+    UserName:   "name",
+    ClientAuth: "your-password",
+}
+err := client.ModifyAclUserPassword(instanceId, args)
+if err != nil {
+    fmt.Println("modify acl user password failed:", err)
+} else {
+    fmt.Println("modify acl user password success")
+}
+```
+
+## 计费变更
+
+### 后付费转预付费
+
+如下代码可以将后付费实例转为预付费，立即生效，请保证账户有足够余额
+
+```go
+args := &scs.ToPrepayArgs{
+    Duration: 1,
+    InstanceIds: []string{
+        "scs-bj-woxuukeunrju",
+        "scs-bj-rfdlbypsafhi",
+    },
+}
+result, err := client.ToPrepay(args)
+if err != nil {
+    fmt.Println("to prepay failed:", err)
+} else {
+    fmt.Println("to prepay success ", result)
+}
+```
+
+### 预付费转后付费
+
+如下代码可以将预付费实例转为后付费，到期后自动生效。已开通自动续费、已到期或处于待变更状态的实例不支持变更
+
+```go
+args := &scs.ToPostpayArgs{
+    InstanceIds: []string{
+        "scs-bj-woxuukeunrju",
+        "scs-bj-rfdlbypsafhi",
+    },
+}
+result, err := client.ToPostpay(args)
+if err != nil {
+    fmt.Println("to postpay failed:", err)
+} else {
+    fmt.Println("to postpay success ", result)
+}
+```
+
+### 取消预付费转后付费
+
+如下代码可以取消待生效的预付费转后付费变更任务
+
+```go
+args := &scs.ToPostpayArgs{
+    InstanceIds: []string{
+        "scs-bj-woxuukeunrju",
+        "scs-bj-rfdlbypsafhi",
+    },
+}
+err := client.CancelToPostpay(args)
+if err != nil {
+    fmt.Println("cancel to postpay failed:", err)
+} else {
+    fmt.Println("cancel to postpay success")
+}
+```
+
+
 # 错误处理
 
 GO语言以error类型标识错误，SCS支持两种错误见下表：

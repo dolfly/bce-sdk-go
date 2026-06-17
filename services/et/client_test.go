@@ -172,6 +172,52 @@ func TestClient_DisableEtChannelIPv6(t *testing.T) {
 	ExpectEqual(t.Errorf, nil, err)
 }
 
+func TestClient_AddEtChannelUsers(t *testing.T) {
+	args := &AddEtChannelUsersArgs{
+		ClientToken:     getClientToken(),
+		EtId:            "dcphy-xxxxxxxxxxxx",
+		EtChannelId:     "dedicatedconn-xxxxxxxxxxxx",
+		AuthorizedUsers: []string{"user-xxxxxxxxxxxx"},
+	}
+	err := EtClient.AddEtChannelUsers(args)
+	ExpectEqual(t.Errorf, nil, err)
+}
+
+func TestClient_RemoveEtChannelUsers(t *testing.T) {
+	args := &RemoveEtChannelUsersArgs{
+		ClientToken:     getClientToken(),
+		EtId:            "dcphy-xxxxxxxxxxxx",
+		EtChannelId:     "dedicatedconn-xxxxxxxxxxxx",
+		AuthorizedUsers: []string{"user-xxxxxxxxxxxx"},
+	}
+	err := EtClient.RemoveEtChannelUsers(args)
+	ExpectEqual(t.Errorf, nil, err)
+}
+
+func TestClient_AddEtChannelRoutes(t *testing.T) {
+	args := &AddEtChannelRoutesArgs{
+		ClientToken: getClientToken(),
+		EtId:        "dcphy-xxxxxxxxxxxx",
+		EtChannelId: "dedicatedconn-xxxxxxxxxxxx",
+		RouteType:   "static-route",
+		Networks:    []string{"192.168.0.0/16"},
+	}
+	err := EtClient.AddEtChannelRoutes(args)
+	ExpectEqual(t.Errorf, nil, err)
+}
+
+func TestClient_RemoveEtChannelRoutes(t *testing.T) {
+	args := &RemoveEtChannelRoutesArgs{
+		ClientToken: getClientToken(),
+		EtId:        "dcphy-xxxxxxxxxxxx",
+		EtChannelId: "dedicatedconn-xxxxxxxxxxxx",
+		RouteType:   "static-route",
+		Networks:    []string{"192.168.0.0/16"},
+	}
+	err := EtClient.RemoveEtChannelRoutes(args)
+	ExpectEqual(t.Errorf, nil, err)
+}
+
 // getClientToken 函数返回一个长度为32的字符串作为客户端令牌。
 func getClientToken() string {
 	return util.NewUUID()
@@ -192,6 +238,17 @@ func TestClient_CreateEtDcphy(t *testing.T) {
 		UserEmail:   "18266666666@baidu.com",
 		UserIdc:     "北京|市辖区|东城区|百度科技园K2",
 		LinkDelay:   100,
+		Billing: &Billing{
+			PaymentTiming: "Prepaid",
+			Reservation: &Reservation{
+				ReservationLength:   1,
+				ReservationTimeUnit: "month",
+			},
+		},
+		AutoRenew: &Reservation{
+			ReservationLength:   1,
+			ReservationTimeUnit: "month",
+		},
 	}
 
 	r, err := EtClient.CreateEtDcphy(args)
