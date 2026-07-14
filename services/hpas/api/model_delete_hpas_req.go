@@ -15,5 +15,6 @@
 package api
 
 type DeleteHpasReq struct {
-	HpasIds []string `json:"hpasIds"`
+	HpasIds      []string `json:"hpasIds"`
+	DeleteVolume bool     `json:"deleteVolume,omitempty"`
 }

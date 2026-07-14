@@ -23,11 +23,7 @@ func ListTgw() {
 		fmt.Printf("Failed to new csn client, err: %v.\n", err)
 		return
 	}
-	args := &csn.ListTgwArgs{
-		Marker:  "",
-		MaxKeys: 1000,
-	}
-	response, err := client.ListTgw("csnid", args) // 云智能网csn的ID
+	response, err := client.ListTgw("csnid", nil) // 云智能网csn的ID
 	if err != nil {
 		fmt.Printf("Failed to list tgw, err: %v.\n", err)
 		panic(err)

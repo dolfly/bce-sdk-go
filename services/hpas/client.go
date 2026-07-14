@@ -308,6 +308,30 @@ func (c *Client) DeleteImages(body *api.DeleteImagesReq) (*api.BaseV3Resp, error
 	return api.DeleteImages(c, body)
 }
 
+// CopyImages - Copies an HPAS image to one or more destination regions.
+//
+// PARAMS:
+//   - body: source image and destination image information
+//
+// RETURNS:
+//   - *api.CopyImagesResp: per-destination acceptance results
+//   - error: the return error if any occurs
+func (c *Client) CopyImages(body *api.CopyImagesReq) (*api.CopyImagesResp, error) {
+	return api.CopyImages(c, body)
+}
+
+// CancelImagesCopy - Cancels HPAS image copies in the current region.
+//
+// PARAMS:
+//   - body: destination image IDs to cancel
+//
+// RETURNS:
+//   - *api.CopyImagesResp: per-image cancellation results
+//   - error: the return error if any occurs
+func (c *Client) CancelImagesCopy(body *api.CancelImagesCopyReq) (*api.CopyImagesResp, error) {
+	return api.CancelImagesCopy(c, body)
+}
+
 // AttachTags -
 //
 // PARAMS:

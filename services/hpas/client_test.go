@@ -131,7 +131,8 @@ func TestCreateInstanceWithJumboFrame(t *testing.T) {
 
 func TestDeleteHpas(t *testing.T) {
 	deleteInstanceArgs := &api.DeleteHpasReq{
-		HpasIds: []string{"hpas-yQtvbIDe"},
+		HpasIds:      []string{"hpas-yQtvbIDe"},
+		DeleteVolume: true,
 	}
 	err := HPAS_CLIENT.DeleteHpas(deleteInstanceArgs)
 	ExpectEqual(t.Errorf, err, nil)

@@ -299,6 +299,10 @@ func TestSetSiteConfig(t *testing.T) {
 	isa := "ON"
 	grpcOrigin := "ON"
 	http2Origin := "ON"
+	ruleIgnoreCase := true
+	ruleCacheKeyQuery := false
+	ruleCacheKeyIgnoreCase := false
+
 	result, err := testCli.SetSiteConfig(testAuthoritySite, &api.SiteConfig{
 		// 节点缓存配置
 		CacheTtl: &[]api.CacheTtl{
@@ -356,7 +360,7 @@ func TestSetSiteConfig(t *testing.T) {
 		},
 
 		// 状态码缓存配置
-		CacheCodeTtl: &[]api.CacheTtlCode{
+		CacheCodeTtl: &[]api.CacheCodeTtl{
 			{Value: "404", Weight: 100, OverrideOrigin: true, Ttl: 10, Type: "code"},
 			{Value: "400", Weight: 100, OverrideOrigin: true, Ttl: 10, Type: "code"},
 		},
@@ -366,6 +370,38 @@ func TestSetSiteConfig(t *testing.T) {
 
 		// HTTP2回源配置
 		Http2Origin: &http2Origin,
+
+		// 规则引擎配置
+		PageRules: &[]api.PageRule{
+			{
+				Name:   "test",
+				Status: "ON",
+				Rules: [][]api.Rule{
+					{
+						{
+							MatchFrom:  "path",
+							Operator:   "inValues",
+							Values:     []string{"/test", "/test2"},
+							IgnoreCase: &ruleIgnoreCase,
+						},
+					},
+				},
+				Config: &api.RuleConfig{
+					CacheTtl: &[]api.CacheTtl{
+						{Value: "/", Weight: 100, OverrideOrigin: true, Ttl: 3600, Type: "path"},
+					},
+					CacheKey: &api.RuleCacheKey{
+						Query:       &ruleCacheKeyQuery,
+						IncludeArgs: &[]string{"v"},
+						IgnoreCase:  &ruleCacheKeyIgnoreCase,
+					},
+					Http3: &api.HTTP3{Enable: &http3Enable},
+					HttpHeader: &[]api.HttpHeader{
+						{Type: "response", Header: "X-Cache-By", Value: "rule", Action: "add"},
+					},
+				},
+			},
+		},
 	})
 
 	data, _ := json.Marshal(result)

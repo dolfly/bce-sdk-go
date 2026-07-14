@@ -11,9 +11,8 @@ func ListRouteRule() {
 	client, _ := csn.NewClient(ak, sk, endpoint)              // 初始化client
 
 	csnRtId := "xxxxx" //云智能网路由表的ID
-	args := &csn.ListRouteRuleArgs{}
 
-	response, err := client.ListRouteRule(csnRtId, args)
+	response, err := client.ListRouteRule(csnRtId, nil)
 	if err != nil {
 		fmt.Println(err)
 	}

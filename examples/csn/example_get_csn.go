@@ -18,4 +18,5 @@ func GetCsn() {
 		return
 	}
 	fmt.Printf("%+v\n", *response)
+	fmt.Printf("createdTime: %s\n", response.CreatedTime)
 }

@@ -88,6 +88,7 @@ type Csn struct {
 	Status      string           `json:"status"`
 	InstanceNum int32            `json:"instanceNum"`
 	CsnBpNum    int32            `json:"csnBpNum"`
+	CreateTime  string           `json:"createTime"`
 	Tags        []model.TagModel `json:"tags"`
 }
 
@@ -179,6 +180,7 @@ type GetCsnResponse struct {
 	Status      string           `json:"status"`
 	InstanceNum int32            `json:"instanceNum"`
 	CsnBpNum    int32            `json:"csnBpNum"`
+	CreatedTime string           `json:"createdTime"`
 	Tags        []model.TagModel `json:"tags"`
 }
 

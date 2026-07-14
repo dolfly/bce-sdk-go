@@ -56,7 +56,7 @@ bce-sdk-go
 |  |--cfc                 //函数计算
 |  |--cfs                 //CFS文件存储服务
 |  |--cfw                 //云防火墙
-|  |--cloudmemory         //云记忆服务
+|  |--dumemory            //云记忆服务
 |  |--csn                 //云智能网
 |  |--ddc                 //DDC数据库专属集群
 |  |--dts                 //数据传输服务

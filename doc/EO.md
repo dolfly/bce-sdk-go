@@ -612,7 +612,7 @@ fmt.Printf("err:%+v\n", err)
 ```go
 cli := GetDefaultClient()
 resp, err := cli.SetSiteConfig("your_site.com", &api.SiteConfig{
-	CacheCodeTtl: &[]api.CacheTtlCode{
+	CacheCodeTtl: &[]api.CacheCodeTtl{
 		{Value: "404", Weight: 100, OverrideOrigin: true, Ttl: 10, Type: "code"},
 		{Value: "400", Weight: 100, OverrideOrigin: true, Ttl: 10, Type: "code"},
 	},
@@ -622,7 +622,7 @@ fmt.Printf("result: %s\n", result)
 fmt.Printf("err:%+v\n", err)
 ```
 
-`api.CacheTtlCode` 字段说明：
+`api.CacheCodeTtl` 字段说明：
 
 | 字段           | 类型   | 是否必选 | 说明                                                                                  |
 | -------------- | ------ | -------- | ------------------------------------------------------------------------------------- |
@@ -671,6 +671,101 @@ fmt.Printf("err:%+v\n", err)
 | 字段        | 类型    | 是否必选 | 说明                                       |
 | ----------- | ------- |------| ------------------------------------------ |
 | Http2Origin | *String | 是    | `ON` 开启 HTTP2 回源；`OFF` 关闭 HTTP2 回源。         |
+
+## 设置规则引擎配置
+
+```go
+cli := GetDefaultClient()
+ignoreCase := true
+cacheKeyQuery := true
+cacheKeyIgnoreCase := false
+resp, err := cli.SetSiteConfig("your_site.com", &api.SiteConfig{
+	PageRules: &[]api.PageRule{
+		{
+			Name:   "rule",
+			Status: "ON",
+			Rules: [][]api.Rule{
+				{
+					{
+						MatchFrom:  "path",
+						Operator:   "inValues",
+						Values:     []string{"/test", "/test2"},
+						IgnoreCase: &ignoreCase,
+					},
+				},
+			},
+			Config: &api.RuleConfig{
+				CacheTtl: &[]api.CacheTtl{
+					{Value: "/", Weight: 100, OverrideOrigin: true, Ttl: 3600, Type: "path"},
+				},
+				CacheKey: &api.RuleCacheKey{
+					Query:       &cacheKeyQuery,
+					IncludeArgs: &[]string{"test"},
+					IgnoreCase:  &cacheKeyIgnoreCase,
+				},
+				HttpHeader: &[]api.HttpHeader{
+					{Type: "response", Header: "X-Cache-By", Value: "rule", Action: "add"},
+				},
+			},
+		},
+	},
+})
+result, _ := json.Marshal(resp)
+fmt.Printf("result: %s\n", result)
+fmt.Printf("err:%+v\n", err)
+```
+规则引擎的详细参数说明可参考API文档：https://cloud.baidu.com/doc/GEO/s/dmimubjhg
+
+`api.PageRule` 字段说明：
+
+| 字段   | 类型             | 是否必选 | 说明           |
+| ------ | ---------------- | -------- |--------------|
+| Name   | String           | 是       | 规则名称。        |
+| Status | String           | 是       | 规则状态。        |
+| Rules  | [][]api.Rule     | 是       | 请求的匹配规则。     |
+| Config | *api.RuleConfig  | 是       | 命中后生效的配置项集合。 |
+
+`api.Rule` 字段说明：
+
+| 字段       | 类型                | 是否必选 | 说明                                                                                        |
+| ---------- |-------------------| -------- |-------------------------------------------------------------------------------------------|
+| MatchFrom  | String            | 是       | 匹配类型。                                                                                     |
+| Operator   | String            | 是       | 操作符；。 |
+| MatchKey   | String            | 否       | 匹配类型的key。                                                                                 |
+| Values     | String / []String | 是       | 匹配值列表。                                                                                    |
+| IgnoreCase | *Bool             | 否       | 是否忽略大小写。                                                                                  |
+
+`api.RuleConfig` 主要字段说明：
+
+| 字段                  | 类型                    | 说明              |
+| --------------------- | ----------------------- |-----------------|
+| CacheTtl              | *[]api.CacheTtl         | 节点缓存。           |
+| CacheKey              | *api.RuleCacheKey       | 自定义cacheKey。    |
+| OfflineMode           | *String                 | 离线模式。           |
+| RefreshRevalidate     | *api.RefreshRevalidate  | 忽略客户端刷新。        |
+| HttpToHttpsEnabled    | *String                 | 强制 HTTPS 开关。    |
+| HttpToHttpsCode       | *String                 | 强制 HTTPS 跳转状态码。 |
+| Hsts                  | *api.HSTS               | HSTS。           |
+| Isa                   | *String                 | 智能加速。           |
+| Http2Disable          | *String                 | HTTP2。          |
+| Http3                 | *api.HTTP3              | HTTP3。          |
+| WebSocket             | *api.WebSocket          | WebSocket。      |
+| Http2Origin           | *String                 | HTTP2 回源。       |
+| ClientMaxBodySize     | *String                 | 最大上传大小。         |
+| Compress              | *String                 | 页面压缩开关。         |
+| CompressMethodArray   | *[]String               | 页面压缩方式。         |
+| HttpHeader            | *[]api.HttpHeader       | 自定义 HTTP 头。     |
+| OriginTimeout         | *api.OriginTimeout      | 回源超时时间。         |
+| OriginRedirectOptions | *api.OriginRedirectOptions | 回源301/302跟随。    |
+| OriginOptions         | *api.OriginOptions      | 回源range。        |
+| RealIp                | *api.RealIp             | 用户IP获取。         |
+| ErrorPage             | *[]api.ErrorPage        | 自定义错误页面。        |
+| TrafficLimit          | *api.TrafficLimit       | 单链接限速。          |
+| AntiHotLink           | *api.AntiHotLink        | URL鉴权。          |
+| OriginArg             | *api.OriginArg          | 回源请求参数。         |
+| UrlRules              | *[]api.UrlRules         | 访问URL重定向。       |
+
+注：`SiteConfig.PageRules` 为指针 + `omitempty`，未设置时不下发；如需清空所有规则，可显式传 `&[]api.PageRule{}`。
 
 ## 查询站点配置
 
@@ -724,6 +819,7 @@ fmt.Printf("SiteConfig: %s\n", allData)
 // cfg.CacheCodeTtl 为该站点当前的状态码缓存配置;
 // cfg.GrpcOrigin 为该站点当前的 gRPC 回源配置;
 // cfg.Http2Origin 为该站点当前的 HTTP2 回源配置;
+// cfg.PageRules 为该站点当前的规则引擎配置;
 ```
 
 

@@ -713,11 +713,13 @@ func ListCsn(cli bce.Client, listCsnArgs *ListCsnArgs) (*ListCsnResponse, error)
 	req.SetMethod(http.GET)
 	path := "/v1/csn"
 	req.SetUri(path)
-	if "" != listCsnArgs.Marker {
-		req.SetParam("marker", listCsnArgs.Marker)
-	}
-	if 0 != listCsnArgs.MaxKeys {
-		req.SetParam("maxKeys", strconv.Itoa(listCsnArgs.MaxKeys))
+	if listCsnArgs != nil {
+		if "" != listCsnArgs.Marker {
+			req.SetParam("marker", listCsnArgs.Marker)
+		}
+		if 0 != listCsnArgs.MaxKeys {
+			req.SetParam("maxKeys", strconv.Itoa(listCsnArgs.MaxKeys))
+		}
 	}
 
 	resp := &bce.BceResponse{}
@@ -749,11 +751,13 @@ func ListCsnBp(cli bce.Client, listCsnBpArgs *ListCsnBpArgs) (*ListCsnBpResponse
 	req.SetMethod(http.GET)
 	path := "/v1/csn/bp"
 	req.SetUri(path)
-	if "" != listCsnBpArgs.Marker {
-		req.SetParam("marker", listCsnBpArgs.Marker)
-	}
-	if 0 != listCsnBpArgs.MaxKeys {
-		req.SetParam("maxKeys", strconv.Itoa(listCsnBpArgs.MaxKeys))
+	if listCsnBpArgs != nil {
+		if "" != listCsnBpArgs.Marker {
+			req.SetParam("marker", listCsnBpArgs.Marker)
+		}
+		if 0 != listCsnBpArgs.MaxKeys {
+			req.SetParam("maxKeys", strconv.Itoa(listCsnBpArgs.MaxKeys))
+		}
 	}
 
 	resp := &bce.BceResponse{}
@@ -850,11 +854,13 @@ func ListInstance(cli bce.Client, csnId string, listInstanceArgs *ListInstanceAr
 	path := "/v1/csn/[csnId]/instance"
 	path = strings.Replace(path, "[csnId]", csnId, -1)
 	req.SetUri(path)
-	if "" != listInstanceArgs.Marker {
-		req.SetParam("marker", listInstanceArgs.Marker)
-	}
-	if 0 != listInstanceArgs.MaxKeys {
-		req.SetParam("maxKeys", strconv.Itoa(listInstanceArgs.MaxKeys))
+	if listInstanceArgs != nil {
+		if "" != listInstanceArgs.Marker {
+			req.SetParam("marker", listInstanceArgs.Marker)
+		}
+		if 0 != listInstanceArgs.MaxKeys {
+			req.SetParam("maxKeys", strconv.Itoa(listInstanceArgs.MaxKeys))
+		}
 	}
 
 	resp := &bce.BceResponse{}
@@ -919,11 +925,13 @@ func ListRouteRule(cli bce.Client, csnRtId string, listRouteRuleArgs *ListRouteR
 	path := "/v1/csn/routeTable/[csnRtId]/rule"
 	path = strings.Replace(path, "[csnRtId]", csnRtId, -1)
 	req.SetUri(path)
-	if "" != listRouteRuleArgs.Marker {
-		req.SetParam("marker", listRouteRuleArgs.Marker)
-	}
-	if 0 != listRouteRuleArgs.MaxKeys {
-		req.SetParam("maxKeys", strconv.Itoa(listRouteRuleArgs.MaxKeys))
+	if listRouteRuleArgs != nil {
+		if "" != listRouteRuleArgs.Marker {
+			req.SetParam("marker", listRouteRuleArgs.Marker)
+		}
+		if 0 != listRouteRuleArgs.MaxKeys {
+			req.SetParam("maxKeys", strconv.Itoa(listRouteRuleArgs.MaxKeys))
+		}
 	}
 
 	resp := &bce.BceResponse{}
@@ -958,11 +966,13 @@ func ListRouteTable(cli bce.Client, csnId string, listRouteTableArgs *ListRouteT
 	path := "/v1/csn/[csnId]/routeTable"
 	path = strings.Replace(path, "[csnId]", csnId, -1)
 	req.SetUri(path)
-	if "" != listRouteTableArgs.Marker {
-		req.SetParam("marker", listRouteTableArgs.Marker)
-	}
-	if 0 != listRouteTableArgs.MaxKeys {
-		req.SetParam("maxKeys", strconv.Itoa(listRouteTableArgs.MaxKeys))
+	if listRouteTableArgs != nil {
+		if "" != listRouteTableArgs.Marker {
+			req.SetParam("marker", listRouteTableArgs.Marker)
+		}
+		if 0 != listRouteTableArgs.MaxKeys {
+			req.SetParam("maxKeys", strconv.Itoa(listRouteTableArgs.MaxKeys))
+		}
 	}
 
 	resp := &bce.BceResponse{}
@@ -996,11 +1006,13 @@ func ListTgw(cli bce.Client, csnId string, listTgwArgs *ListTgwArgs) (*ListTgwRe
 	path := "/v1/csn/[csnId]/tgw"
 	path = strings.Replace(path, "[csnId]", csnId, -1)
 	req.SetUri(path)
-	if "" != listTgwArgs.Marker {
-		req.SetParam("marker", listTgwArgs.Marker)
-	}
-	if 0 != listTgwArgs.MaxKeys {
-		req.SetParam("maxKeys", strconv.Itoa(listTgwArgs.MaxKeys))
+	if listTgwArgs != nil {
+		if "" != listTgwArgs.Marker {
+			req.SetParam("marker", listTgwArgs.Marker)
+		}
+		if 0 != listTgwArgs.MaxKeys {
+			req.SetParam("maxKeys", strconv.Itoa(listTgwArgs.MaxKeys))
+		}
 	}
 
 	resp := &bce.BceResponse{}
@@ -1038,11 +1050,13 @@ func ListTgwRule(cli bce.Client, csnId string, tgwId string, listTgwRuleArgs *Li
 	path = strings.Replace(path, "[csnId]", csnId, -1)
 	path = strings.Replace(path, "[tgwId]", tgwId, -1)
 	req.SetUri(path)
-	if "" != listTgwRuleArgs.Marker {
-		req.SetParam("marker", listTgwRuleArgs.Marker)
-	}
-	if 0 != listTgwRuleArgs.MaxKeys {
-		req.SetParam("maxKeys", strconv.Itoa(listTgwRuleArgs.MaxKeys))
+	if listTgwRuleArgs != nil {
+		if "" != listTgwRuleArgs.Marker {
+			req.SetParam("marker", listTgwRuleArgs.Marker)
+		}
+		if 0 != listTgwRuleArgs.MaxKeys {
+			req.SetParam("maxKeys", strconv.Itoa(listTgwRuleArgs.MaxKeys))
+		}
 	}
 
 	resp := &bce.BceResponse{}

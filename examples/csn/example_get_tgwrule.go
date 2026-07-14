@@ -24,11 +24,8 @@ func ListTgwRule() {
 		fmt.Printf("Failed to new csn client, err: %v.\n", err)
 		return
 	}
-	args := &csn.ListTgwRuleArgs{
-		MaxKeys: 1000,
-	}
 	// csnId: 云智能网的ID tgwId: TGW的ID
-	response, err := client.ListTgwRule("csnid", "tgwid", args)
+	response, err := client.ListTgwRule("csnid", "tgwid", nil)
 	if err != nil {
 		panic(err)
 	}

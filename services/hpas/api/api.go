@@ -759,6 +759,84 @@ func DeleteImages(cli bce.Client, body *DeleteImagesReq) (*BaseV3Resp, error) {
 	return res, nil
 }
 
+// CopyImages - Copies an HPAS image to one or more destination regions.
+//
+// PARAMS:
+//   - cli: the client agent which can perform sending request
+//   - body: source image and destination image information
+//
+// RETURNS:
+//   - *api.CopyImagesResp: per-destination acceptance results
+//   - error: the return error if any occurs
+func CopyImages(cli bce.Client, body *CopyImagesReq) (*CopyImagesResp, error) {
+	req := &bce.BceRequest{}
+	req.SetMethod(http.POST)
+	req.SetUri("/")
+	req.SetParam("action", "CopyImages")
+
+	jsonBytes, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	jsonBody, err := bce.NewBodyFromBytes(jsonBytes)
+	if err != nil {
+		return nil, err
+	}
+	req.SetBody(jsonBody)
+
+	resp := &bce.BceResponse{}
+	if err := cli.SendRequest(req, resp); err != nil {
+		return nil, err
+	}
+	if resp.IsFail() {
+		return nil, resp.ServiceError()
+	}
+	res := &CopyImagesResp{}
+	if err := resp.ParseJsonBody(res); err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
+// CancelImagesCopy - Cancels HPAS image copies in the current region.
+//
+// PARAMS:
+//   - cli: the client agent which can perform sending request
+//   - body: destination image IDs to cancel
+//
+// RETURNS:
+//   - *api.CopyImagesResp: per-image cancellation results
+//   - error: the return error if any occurs
+func CancelImagesCopy(cli bce.Client, body *CancelImagesCopyReq) (*CopyImagesResp, error) {
+	req := &bce.BceRequest{}
+	req.SetMethod(http.POST)
+	req.SetUri("/")
+	req.SetParam("action", "CancelImagesCopy")
+
+	jsonBytes, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	jsonBody, err := bce.NewBodyFromBytes(jsonBytes)
+	if err != nil {
+		return nil, err
+	}
+	req.SetBody(jsonBody)
+
+	resp := &bce.BceResponse{}
+	if err := cli.SendRequest(req, resp); err != nil {
+		return nil, err
+	}
+	if resp.IsFail() {
+		return nil, resp.ServiceError()
+	}
+	res := &CopyImagesResp{}
+	if err := resp.ParseJsonBody(res); err != nil {
+		return nil, err
+	}
+	return res, nil
+}
+
 // AttachTags -
 //
 // PARAMS:
