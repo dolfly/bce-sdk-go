@@ -108,7 +108,9 @@ func TestClient_DeleteCsn(t *testing.T) {
 }
 
 func TestClient_ListCsn(t *testing.T) {
-	args := &ListCsnArgs{}
+	args := &ListCsnArgs{
+		MaxKeys: 100,
+	}
 	result, err := CsnClient.ListCsn(args)
 	ExpectEqual(t.Errorf, nil, err)
 	r, err := json.Marshal(result)
@@ -123,7 +125,9 @@ func TestClient_GetCsn(t *testing.T) {
 }
 
 func TestClient_ListInstance(t *testing.T) {
-	args := &ListInstanceArgs{}
+	args := &ListInstanceArgs{
+		MaxKeys: 100,
+	}
 	result, err := CsnClient.ListInstance("csn-xxxxxxxxxxx", args)
 	ExpectEqual(t.Errorf, nil, err)
 	r, err := json.Marshal(result)
@@ -151,7 +155,9 @@ func TestClient_DetachInstance(t *testing.T) {
 }
 
 func TestClient_ListRouteTable(t *testing.T) {
-	args := &ListRouteTableArgs{}
+	args := &ListRouteTableArgs{
+		MaxKeys: 100,
+	}
 	result, err := CsnClient.ListRouteTable("csn-xxxxxxxxxxx", args)
 	ExpectEqual(t.Errorf, nil, err)
 	r, err := json.Marshal(result)
@@ -169,7 +175,9 @@ func TestClient_CreateRouteRule(t *testing.T) {
 }
 
 func TestClient_ListRouteRuleArgs(t *testing.T) {
-	args := &ListRouteRuleArgs{}
+	args := &ListRouteRuleArgs{
+		MaxKeys: 100,
+	}
 	result, err := CsnClient.ListRouteRule("csnRt-xxxxxxxxxxx", args)
 	ExpectEqual(t.Errorf, nil, err)
 	r, err := json.Marshal(result)
@@ -260,7 +268,9 @@ func TestClient_DeleteCsnBp(t *testing.T) {
 }
 
 func TestClient_ListCsnBp(t *testing.T) {
-	args := &ListCsnBpArgs{}
+	args := &ListCsnBpArgs{
+		MaxKeys: 100,
+	}
 	result, err := CsnClient.ListCsnBp(args)
 	ExpectEqual(t.Errorf, nil, err)
 	r, err := json.Marshal(result)
@@ -342,7 +352,9 @@ func TestClient_ListCsnBpLimitByCsnId(t *testing.T) {
 }
 
 func TestClient_ListTgw(t *testing.T) {
-	args := &ListTgwArgs{}
+	args := &ListTgwArgs{
+		MaxKeys: 100,
+	}
 	result, err := CsnClient.ListTgw("csn-xxxxxxxxxxx", args)
 	ExpectEqual(t.Errorf, nil, err)
 	r, err := json.Marshal(result)
@@ -362,7 +374,9 @@ func TestClient_UpdateTgw(t *testing.T) {
 }
 
 func TestClient_ListTgwRuleArgs(t *testing.T) {
-	args := &ListTgwRuleArgs{}
+	args := &ListTgwRuleArgs{
+		MaxKeys: 100,
+	}
 	result, err := CsnClient.ListTgwRule("csn-xxxxxxxxxxx", "tgw-xxxxxxxxxxx", args)
 	ExpectEqual(t.Errorf, nil, err)
 	r, err := json.Marshal(result)

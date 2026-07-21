@@ -17,6 +17,9 @@ func CreateHealthCheck() {
 	args := &etGateway.CreateHealthCheckArgs{
 		ClientToken:           getClientToken(),
 		EtGatewayId:           "dcgw-iiyc0ers2qx4",
+		DcphyId:               "dcphy-axwuruqsn6af",
+		ChannelId:             "dedicatedconn-jbxquurmvghc",
+		SubnetId:              "sbn-pmibbccz3g7t",
 		HealthCheckSourceIp:   "192.168.0.1",
 		HealthCheckType:       etGateway.HEALTH_CHECK_ICMP,
 		HealthCheckPort:       80,

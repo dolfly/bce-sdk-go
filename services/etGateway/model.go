@@ -82,7 +82,7 @@ type EtGatewayDetail struct {
 	Tags                []model.TagModel `json:"tags,omitempty"`
 }
 
-//  参数localCidrs只有在专线网关处于running状态时允许更新。
+// 参数localCidrs只有在专线网关处于running状态时允许更新。
 type UpdateEtGatewayArgs struct {
 	ClientToken    string   `json:"clientToken,omitempty"`
 	EtGatewayId    string   `json:"etGatewayId"`
@@ -104,6 +104,9 @@ type BindEtArgs struct {
 type CreateHealthCheckArgs struct {
 	ClientToken           string          `json:"clientToken,omitempty"`
 	EtGatewayId           string          `json:"etGatewayId"`
+	DcphyId               string          `json:"dcphyId,omitempty"`
+	ChannelId             string          `json:"channelId,omitempty"`
+	SubnetId              string          `json:"subnetId,omitempty"`
 	HealthCheckSourceIp   string          `json:"healthCheckSourceIp,omitempty"`
 	HealthCheckType       HealthCheckType `json:"healthCheckType,omitempty"`
 	HealthCheckPort       int             `json:"healthCheckPort,omitempty"`

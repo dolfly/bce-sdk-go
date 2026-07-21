@@ -99,6 +99,19 @@ client = DuMemory.NewWithTimeout("https://cloud.memory.bj.baidubce.com/api", "<A
 | 操作 | GET | /v1/default/banks/{bankId}/operations | `ListOperations` |
 | 操作 | DELETE | /v1/default/banks/{bankId}/operations/{operationId} | `CancelOperation` |
 | 文件 | POST | /v1/default/banks/{bankId}/files/retain | `FilesRetain` |
+| 标签作用域扩展 | POST | /v1/default/banks/{bankId}/memories | `RetainWithScope` |
+| 标签作用域扩展 | POST | /v1/default/banks/{bankId}/memories/recall | `RecallWithScope` |
+| 标签作用域扩展 | POST | /v1/default/banks/{bankId}/reflect | `ReflectWithScope` |
+| 标签作用域扩展 | GET | /v1/default/banks/{bankId}/memories/{memoryId} | `GetMemoryWithScope` |
+| 标签作用域扩展 | GET | /v1/default/banks/{bankId}/tags | `ListTagsWithScope` |
+| 标签作用域扩展 | GET | /v1/default/banks/{bankId}/documents | `ListDocumentsWithScope` |
+| 标签作用域扩展 | PATCH | /v1/default/banks/{bankId}/documents/{documentId} | `UpdateDocumentTagsWithScope` |
+| 标签作用域扩展 | GET | /v1/default/banks/{bankId}/directives | `ListDirectivesWithScope` |
+| 标签作用域扩展 | POST | /v1/default/banks/{bankId}/directives | `CreateDirectiveWithScope` |
+| 标签作用域扩展 | PATCH | /v1/default/banks/{bankId}/directives/{directiveId} | `UpdateDirectiveWithScope` |
+| 标签作用域扩展 | GET | /v1/default/banks/{bankId}/mental-models | `ListMentalModelsWithScope` |
+| 标签作用域扩展 | POST | /v1/default/banks/{bankId}/mental-models | `CreateMentalModelWithScope` |
+| 标签作用域扩展 | PATCH | /v1/default/banks/{bankId}/mental-models/{modelId} | `UpdateMentalModelWithScope` |
 
 ---
 
@@ -2412,6 +2425,971 @@ Content-Type: application/pdf
 f, _ := os.Open("note.pdf")
 defer f.Close()
 out, err := client.FilesRetain(ctx, "demo-bank", []*os.File{f}, "")
+```
+
+---
+
+## 十、标签作用域扩展接口
+
+本节描述本次新增的 `WithScope` 系列 SDK 扩展接口。该系列接口复用服务端已有 REST API，不新增服务端路径；SDK 会在请求中的 `tags`、`document_tags` 或查询参数 `tags` 中自动追加实体作用域标签，用于把记忆、文档、指令、心智模型隔离到指定用户、Agent、App 或 Run。
+
+作用域由 `EntityScope` 表示：
+
+```go
+type EntityScope struct {
+    UserID  string
+    AgentID string
+    AppID   string
+    RunID   string
+}
+```
+
+生成的标签格式固定为：
+
+| 字段 | 生成 tag | 示例 |
+| --- | --- | --- |
+| UserID | `user_id:{UserID}` | `user_id:u-001` |
+| AgentID | `agent_id:{AgentID}` | `agent_id:agent-001` |
+| AppID | `app_id:{AppID}` | `app_id:app-001` |
+| RunID | `run_id:{RunID}` | `run_id:run-001` |
+
+至少需要设置一个实体 ID。如果 `UserID`、`AgentID`、`AppID`、`RunID` 全部为空，SDK 返回错误：
+
+```text
+At least one entity ID (user_id, agent_id, app_id, or run_id) is required.
+```
+
+对于过滤类接口，如果调用方未显式设置 `tags_match`，或仍保持上游构造器默认值 `any`，SDK 会自动使用 `all_strict`。这样可以确保所有 scope tags 都必须命中，并排除无 tag 的 global memory / document / directive / mental model。如果调用方显式设置 `exact`、`all`、`any_strict` 或 `all_strict`，SDK 会保留调用方设置。
+
+---
+
+### 10.1 作用域写入记忆 RetainWithScope
+
+**接口说明**
+
+向指定 bank 写入记忆，并自动把实体作用域 tags 追加到每条 `items[].tags`。当前 Go SDK 生成模型已支持 `document_tags`，因此 SDK 也会把实体作用域 tags 追加到批次级 `document_tags`，使文档级标签与 memory units 保持一致。调用方已有业务 tags 会保留并去重。
+
+**请求 URI**
+
+```
+POST /v1/default/banks/{bankId}/memories
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer <API_KEY>
+Content-Type: application/json
+```
+
+**请求头域**
+
+除公共头域外，无其它特殊头域。
+
+**请求参数**
+
+| 参数名称 | 参数类型 | 是否必须 | 参数位置 | 描述 |
+| --- | --- | --- | --- | --- |
+| bankId | String | 是 | URL 参数 | 记忆库 ID |
+| scope.UserID | String | 否 | SDK 参数 | 用户 ID，生成 `user_id:{UserID}` |
+| scope.AgentID | String | 否 | SDK 参数 | Agent ID，生成 `agent_id:{AgentID}` |
+| scope.AppID | String | 否 | SDK 参数 | App ID，生成 `app_id:{AppID}` |
+| scope.RunID | String | 否 | SDK 参数 | Run ID，生成 `run_id:{RunID}` |
+| items | Array<MemoryItem> | 是 | RequestBody | 待写入的记忆条目 |
+| items[].tags | Array<String> | 否 | RequestBody | 业务 tags；SDK 自动追加 scope tags |
+| document_tags | Array<String> | 否 | RequestBody | 批次级文档 tags；SDK 自动追加 scope tags |
+
+**返回头域**
+
+除公共头域外，无其它特殊头域。
+
+**返回参数**
+
+同 `Retain`，包含 `success`、`bank_id`、`items_count`、`async`、`operation_id`、`operation_ids`、`usage` 等字段。
+
+**请求示例**
+
+```http
+POST /v1/default/banks/demo-bank/memories
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer bce-v3/ALTAK-xxx/xxx
+Content-Type: application/json
+
+{
+  "items": [
+    {
+      "content": "User likes concise technical explanations.",
+      "tags": ["topic:preference", "user_id:u-001", "app_id:app-001"]
+    }
+  ],
+  "document_tags": ["source:example", "user_id:u-001", "app_id:app-001"]
+}
+```
+
+**返回示例**
+
+```json
+{
+  "success": true,
+  "bank_id": "demo-bank",
+  "items_count": 1,
+  "async": false
+}
+```
+
+**SDK 方法**
+
+```go
+scope := dumemory.EntityScope{UserID: "u-001", AppID: "app-001"}
+item := *dumemory.NewMemoryItem("User likes concise technical explanations.")
+item.Tags = []string{"topic:preference"}
+req := dumemory.NewRetainRequest([]dumemory.MemoryItem{item})
+req.DocumentTags = []string{"source:example"}
+out, err := client.RetainWithScope(ctx, "demo-bank", scope, *req)
+```
+
+---
+
+### 10.2 作用域召回记忆 RecallWithScope
+
+**接口说明**
+
+在指定实体作用域内召回记忆。SDK 会把 scope tags 追加到请求体 `tags`，并在未显式设置匹配模式时使用 `all_strict`，避免召回无 tag 的 global memory。
+
+**请求 URI**
+
+```
+POST /v1/default/banks/{bankId}/memories/recall
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer <API_KEY>
+Content-Type: application/json
+```
+
+**请求头域**
+
+除公共头域外，无其它特殊头域。
+
+**请求参数**
+
+| 参数名称 | 参数类型 | 是否必须 | 参数位置 | 描述 |
+| --- | --- | --- | --- | --- |
+| bankId | String | 是 | URL 参数 | 记忆库 ID |
+| scope | EntityScope | 是 | SDK 参数 | 至少包含一个实体 ID |
+| query | String | 是 | RequestBody | 查询语句 |
+| tags | Array<String> | 否 | RequestBody | 业务 tags；SDK 自动追加 scope tags |
+| tags_match | String | 否 | RequestBody | 标签匹配模式，默认使用 `all_strict` |
+| tag_groups | Array<Object> | 否 | RequestBody | 多组标签条件，SDK 保留原值 |
+
+**返回头域**
+
+除公共头域外，无其它特殊头域。
+
+**返回参数**
+
+同 `Recall`，包含 `results`、`trace`、`entities`、`chunks`、`source_facts` 等字段，返回结果中可包含 tags。
+
+**请求示例**
+
+```http
+POST /v1/default/banks/demo-bank/memories/recall
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer bce-v3/ALTAK-xxx/xxx
+Content-Type: application/json
+
+{
+  "query": "What response style does the user prefer?",
+  "tags": ["topic:preference", "user_id:u-001", "app_id:app-001"],
+  "tags_match": "all_strict"
+}
+```
+
+**返回示例**
+
+```json
+{
+  "results": [
+    {
+      "id": "m-001",
+      "content": "User likes concise technical explanations.",
+      "tags": ["topic:preference", "user_id:u-001", "app_id:app-001"]
+    }
+  ]
+}
+```
+
+**SDK 方法**
+
+```go
+scope := dumemory.EntityScope{UserID: "u-001", AppID: "app-001"}
+req := dumemory.NewRecallRequest("What response style does the user prefer?")
+req.Tags = []string{"topic:preference"}
+out, err := client.RecallWithScope(ctx, "demo-bank", scope, *req)
+```
+
+---
+
+### 10.3 作用域综合记忆 ReflectWithScope
+
+**接口说明**
+
+在指定实体作用域内综合记忆生成回答。SDK 会把 scope tags 追加到请求体 `tags`，默认使用 `all_strict` 过滤参与综合的 memory。
+
+**请求 URI**
+
+```
+POST /v1/default/banks/{bankId}/reflect
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer <API_KEY>
+Content-Type: application/json
+```
+
+**请求头域**
+
+除公共头域外，无其它特殊头域。
+
+**请求参数**
+
+| 参数名称 | 参数类型 | 是否必须 | 参数位置 | 描述 |
+| --- | --- | --- | --- | --- |
+| bankId | String | 是 | URL 参数 | 记忆库 ID |
+| scope | EntityScope | 是 | SDK 参数 | 至少包含一个实体 ID |
+| query | String | 是 | RequestBody | 综合问题 |
+| tags | Array<String> | 否 | RequestBody | 业务 tags；SDK 自动追加 scope tags |
+| tags_match | String | 否 | RequestBody | 标签匹配模式，默认使用 `all_strict` |
+| response_schema | Object | 否 | RequestBody | 结构化输出 schema |
+
+**返回头域**
+
+除公共头域外，无其它特殊头域。
+
+**返回参数**
+
+同 `Reflect`，包含 `text`、`based_on`、`structured_output`、`usage`、`trace` 等字段。
+
+**请求示例**
+
+```http
+POST /v1/default/banks/demo-bank/reflect
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer bce-v3/ALTAK-xxx/xxx
+Content-Type: application/json
+
+{
+  "query": "Summarize the user's working preferences.",
+  "tags": ["topic:preference", "user_id:u-001", "agent_id:agent-001"],
+  "tags_match": "all_strict"
+}
+```
+
+**返回示例**
+
+```json
+{
+  "text": "The user prefers concise and practical technical explanations."
+}
+```
+
+**SDK 方法**
+
+```go
+scope := dumemory.EntityScope{UserID: "u-001", AgentID: "agent-001"}
+req := dumemory.NewReflectRequest("Summarize the user's working preferences.")
+req.Tags = []string{"topic:preference"}
+out, err := client.ReflectWithScope(ctx, "demo-bank", scope, *req)
+```
+
+---
+
+### 10.4 作用域获取记忆 GetMemoryWithScope
+
+**接口说明**
+
+获取单条 memory，并要求调用方显式传入实体作用域。服务端 `GET /memories/{memoryId}` 不支持 tag 过滤，因此该方法主要用于在 SDK 层统一校验调用方必须提供 scope；返回体中的 tags 可由业务侧进一步校验。
+
+**请求 URI**
+
+```
+GET /v1/default/banks/{bankId}/memories/{memoryId}
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer <API_KEY>
+```
+
+**请求头域**
+
+除公共头域外，无其它特殊头域。
+
+**请求参数**
+
+| 参数名称 | 参数类型 | 是否必须 | 参数位置 | 描述 |
+| --- | --- | --- | --- | --- |
+| bankId | String | 是 | URL 参数 | 记忆库 ID |
+| memoryId | String | 是 | URL 参数 | Memory ID |
+| scope | EntityScope | 是 | SDK 参数 | 至少包含一个实体 ID，用于强制调用方声明作用域 |
+
+**返回头域**
+
+除公共头域外，无其它特殊头域。
+
+**返回参数**
+
+服务端返回 memory 详情，通常包含 `id`、`content`、`metadata`、`tags` 等字段。
+
+**请求示例**
+
+```http
+GET /v1/default/banks/demo-bank/memories/m-001
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer bce-v3/ALTAK-xxx/xxx
+```
+
+**返回示例**
+
+```json
+{
+  "id": "m-001",
+  "content": "User likes concise technical explanations.",
+  "tags": ["topic:preference", "user_id:u-001"]
+}
+```
+
+**SDK 方法**
+
+```go
+scope := dumemory.EntityScope{UserID: "u-001"}
+out, err := client.GetMemoryWithScope(ctx, "demo-bank", "m-001", scope)
+```
+
+---
+
+### 10.5 作用域列出标签 ListTagsWithScope
+
+**接口说明**
+
+列出指定实体作用域下的 tag。SDK 会先校验 scope；如果 `ListTagsOptions.Q` 为空，则默认使用第一个 scope tag 加通配符作为查询条件，例如 `user_id:u-001*`。如果调用方显式设置 `Q`，SDK 保留该查询条件。
+
+**请求 URI**
+
+```
+GET /v1/default/banks/{bankId}/tags?q={q}&source={source}&limit={limit}&offset={offset}
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer <API_KEY>
+```
+
+**请求头域**
+
+除公共头域外，无其它特殊头域。
+
+**请求参数**
+
+| 参数名称 | 参数类型 | 是否必须 | 参数位置 | 描述 |
+| --- | --- | --- | --- | --- |
+| bankId | String | 是 | URL 参数 | 记忆库 ID |
+| scope | EntityScope | 是 | SDK 参数 | 至少包含一个实体 ID |
+| q | String | 否 | Query 参数 | 通配查询，如 `user_id:u-001*` |
+| source | String | 否 | Query 参数 | 标签来源，如 `memories`、`mental_models` |
+| limit | Integer | 否 | Query 参数 | 分页大小 |
+| offset | Integer | 否 | Query 参数 | 偏移量 |
+
+**返回头域**
+
+除公共头域外，无其它特殊头域。
+
+**返回参数**
+
+| 参数名称 | 参数类型 | 描述 |
+| --- | --- | --- |
+| items | Array<TagItem> | 标签列表，每项包含 `tag` 与 `count` |
+| total | Integer | 总数 |
+| limit | Integer | 分页大小 |
+| offset | Integer | 偏移量 |
+
+**请求示例**
+
+```http
+GET /v1/default/banks/demo-bank/tags?q=user_id:u-001*&source=memories&limit=20
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer bce-v3/ALTAK-xxx/xxx
+```
+
+**返回示例**
+
+```json
+{
+  "items": [
+    { "tag": "user_id:u-001", "count": 10 },
+    { "tag": "topic:preference", "count": 3 }
+  ],
+  "total": 2,
+  "limit": 20,
+  "offset": 0
+}
+```
+
+**SDK 方法**
+
+```go
+scope := dumemory.EntityScope{UserID: "u-001"}
+out, err := client.ListTagsWithScope(ctx, "demo-bank", scope, dumemory.ListTagsOptions{
+    Source: "memories",
+    Limit:  20,
+})
+```
+
+---
+
+### 10.6 作用域列出文档 ListDocumentsWithScope
+
+**接口说明**
+
+按实体作用域列出文档。SDK 会把 scope tags 追加到 `ListDocumentsOptions.Tags`，并默认使用 `all_strict`，避免返回无 tag 的 global document。
+
+**请求 URI**
+
+```
+GET /v1/default/banks/{bankId}/documents?tags={tag}&tags_match={tagsMatch}&limit={limit}&offset={offset}
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer <API_KEY>
+```
+
+**请求头域**
+
+除公共头域外，无其它特殊头域。
+
+**请求参数**
+
+| 参数名称 | 参数类型 | 是否必须 | 参数位置 | 描述 |
+| --- | --- | --- | --- | --- |
+| bankId | String | 是 | URL 参数 | 记忆库 ID |
+| scope | EntityScope | 是 | SDK 参数 | 至少包含一个实体 ID |
+| tags | Array<String> | 否 | Query 参数 | 业务 tags；SDK 自动追加 scope tags |
+| tags_match | String | 否 | Query 参数 | 默认使用 `all_strict` |
+| q | String | 否 | Query 参数 | 关键词 |
+| limit | Integer | 否 | Query 参数 | 分页大小 |
+| offset | Integer | 否 | Query 参数 | 偏移量 |
+
+**返回头域**
+
+除公共头域外，无其它特殊头域。
+
+**返回参数**
+
+同 `ListDocuments`，包含 `items`、`total`、`limit`、`offset`。
+
+**请求示例**
+
+```http
+GET /v1/default/banks/demo-bank/documents?tags=source:example&tags=user_id:u-001&tags=run_id:run-001&tags_match=all_strict&limit=20
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer bce-v3/ALTAK-xxx/xxx
+```
+
+**返回示例**
+
+```json
+{ "items": [], "total": 0, "limit": 20, "offset": 0 }
+```
+
+**SDK 方法**
+
+```go
+scope := dumemory.EntityScope{UserID: "u-001", RunID: "run-001"}
+out, err := client.ListDocumentsWithScope(ctx, "demo-bank", scope, dumemory.ListDocumentsOptions{
+    Tags:  []string{"source:example"},
+    Limit: 20,
+})
+```
+
+---
+
+### 10.7 作用域更新文档标签 UpdateDocumentTagsWithScope
+
+**接口说明**
+
+更新文档 tags，并自动追加实体作用域 tags。服务端会把文档 tags 传播到关联 memory units，并使衍生 observation 失效，等待后续重算。
+
+**请求 URI**
+
+```
+PATCH /v1/default/banks/{bankId}/documents/{documentId}
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer <API_KEY>
+Content-Type: application/json
+```
+
+**请求头域**
+
+除公共头域外，无其它特殊头域。
+
+**请求参数**
+
+| 参数名称 | 参数类型 | 是否必须 | 参数位置 | 描述 |
+| --- | --- | --- | --- | --- |
+| bankId | String | 是 | URL 参数 | 记忆库 ID |
+| documentId | String | 是 | URL 参数 | 文档 ID |
+| scope | EntityScope | 是 | SDK 参数 | 至少包含一个实体 ID |
+| tags | Array<String> | 否 | RequestBody | 业务 tags；SDK 自动追加 scope tags |
+
+**返回头域**
+
+除公共头域外，无其它特殊头域。
+
+**返回参数**
+
+同 `UpdateDocument`，通常包含 `success`。
+
+**请求示例**
+
+```http
+PATCH /v1/default/banks/demo-bank/documents/doc-001
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer bce-v3/ALTAK-xxx/xxx
+Content-Type: application/json
+
+{
+  "tags": ["source:example", "topic:preference", "user_id:u-001", "app_id:app-001"]
+}
+```
+
+**返回示例**
+
+```json
+{ "success": true }
+```
+
+**SDK 方法**
+
+```go
+scope := dumemory.EntityScope{UserID: "u-001", AppID: "app-001"}
+req := dumemory.NewUpdateDocumentRequest()
+req.Tags = []string{"source:example", "topic:preference"}
+out, err := client.UpdateDocumentTagsWithScope(ctx, "demo-bank", "doc-001", scope, *req)
+```
+
+---
+
+### 10.8 作用域列出指令 ListDirectivesWithScope
+
+**接口说明**
+
+按实体作用域列出指令。SDK 会把 scope tags 追加到 `ListDirectivesOptions.Tags`，并默认使用 `all_strict`。
+
+**请求 URI**
+
+```
+GET /v1/default/banks/{bankId}/directives?tags={tag}&tags_match={tagsMatch}&active_only={activeOnly}&limit={limit}&offset={offset}
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer <API_KEY>
+```
+
+**请求头域**
+
+除公共头域外，无其它特殊头域。
+
+**请求参数**
+
+| 参数名称 | 参数类型 | 是否必须 | 参数位置 | 描述 |
+| --- | --- | --- | --- | --- |
+| bankId | String | 是 | URL 参数 | 记忆库 ID |
+| scope | EntityScope | 是 | SDK 参数 | 至少包含一个实体 ID |
+| tags | Array<String> | 否 | Query 参数 | 业务 tags；SDK 自动追加 scope tags |
+| tags_match | String | 否 | Query 参数 | 默认使用 `all_strict` |
+| active_only | Boolean | 否 | Query 参数 | 是否只返回启用指令 |
+| limit | Integer | 否 | Query 参数 | 分页大小 |
+| offset | Integer | 否 | Query 参数 | 偏移量 |
+
+**返回头域**
+
+除公共头域外，无其它特殊头域。
+
+**返回参数**
+
+同 `ListDirectives`，包含 `items`。
+
+**请求示例**
+
+```http
+GET /v1/default/banks/demo-bank/directives?tags=topic:style&tags=user_id:u-001&tags=agent_id:agent-001&tags_match=all_strict&active_only=true
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer bce-v3/ALTAK-xxx/xxx
+```
+
+**返回示例**
+
+```json
+{ "items": [] }
+```
+
+**SDK 方法**
+
+```go
+scope := dumemory.EntityScope{UserID: "u-001", AgentID: "agent-001"}
+out, err := client.ListDirectivesWithScope(ctx, "demo-bank", scope, dumemory.ListDirectivesOptions{
+    Tags:       []string{"topic:style"},
+    ActiveOnly: true,
+    Limit:      20,
+})
+```
+
+---
+
+### 10.9 作用域创建指令 CreateDirectiveWithScope
+
+**接口说明**
+
+创建指令，并自动把实体作用域 tags 追加到请求体 `tags`。
+
+**请求 URI**
+
+```
+POST /v1/default/banks/{bankId}/directives
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer <API_KEY>
+Content-Type: application/json
+```
+
+**请求头域**
+
+除公共头域外，无其它特殊头域。
+
+**请求参数**
+
+| 参数名称 | 参数类型 | 是否必须 | 参数位置 | 描述 |
+| --- | --- | --- | --- | --- |
+| bankId | String | 是 | URL 参数 | 记忆库 ID |
+| scope | EntityScope | 是 | SDK 参数 | 至少包含一个实体 ID |
+| name | String | 是 | RequestBody | 指令名称 |
+| content | String | 是 | RequestBody | 指令内容 |
+| priority | Integer | 否 | RequestBody | 优先级 |
+| is_active | Boolean | 否 | RequestBody | 是否启用 |
+| tags | Array<String> | 否 | RequestBody | 业务 tags；SDK 自动追加 scope tags |
+
+**返回头域**
+
+除公共头域外，无其它特殊头域。
+
+**返回参数**
+
+同 `CreateDirective`，包含 `id`、`bank_id`、`name`、`content`、`priority`、`is_active`、`tags`、`created_at`、`updated_at`。
+
+**请求示例**
+
+```http
+POST /v1/default/banks/demo-bank/directives
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer bce-v3/ALTAK-xxx/xxx
+Content-Type: application/json
+
+{
+  "name": "scoped-tone",
+  "content": "Use a concise and practical tone.",
+  "tags": ["topic:style", "user_id:u-001", "agent_id:agent-001"]
+}
+```
+
+**返回示例**
+
+```json
+{
+  "id": "dir-001",
+  "bank_id": "demo-bank",
+  "name": "scoped-tone",
+  "content": "Use a concise and practical tone.",
+  "tags": ["topic:style", "user_id:u-001", "agent_id:agent-001"]
+}
+```
+
+**SDK 方法**
+
+```go
+scope := dumemory.EntityScope{UserID: "u-001", AgentID: "agent-001"}
+req := dumemory.NewCreateDirectiveRequest("scoped-tone", "Use a concise and practical tone.")
+req.Tags = []string{"topic:style"}
+out, err := client.CreateDirectiveWithScope(ctx, "demo-bank", scope, *req)
+```
+
+---
+
+### 10.10 作用域更新指令 UpdateDirectiveWithScope
+
+**接口说明**
+
+更新指令，并自动把实体作用域 tags 追加到请求体 `tags`。
+
+**请求 URI**
+
+```
+PATCH /v1/default/banks/{bankId}/directives/{directiveId}
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer <API_KEY>
+Content-Type: application/json
+```
+
+**请求头域**
+
+除公共头域外，无其它特殊头域。
+
+**请求参数**
+
+| 参数名称 | 参数类型 | 是否必须 | 参数位置 | 描述 |
+| --- | --- | --- | --- | --- |
+| bankId | String | 是 | URL 参数 | 记忆库 ID |
+| directiveId | String | 是 | URL 参数 | 指令 ID |
+| scope | EntityScope | 是 | SDK 参数 | 至少包含一个实体 ID |
+| name | String | 否 | RequestBody | 新名称 |
+| content | String | 否 | RequestBody | 新内容 |
+| priority | Integer | 否 | RequestBody | 优先级 |
+| is_active | Boolean | 否 | RequestBody | 是否启用 |
+| tags | Array<String> | 否 | RequestBody | 业务 tags；SDK 自动追加 scope tags |
+
+**返回头域**
+
+除公共头域外，无其它特殊头域。
+
+**返回参数**
+
+同 `UpdateDirective`，返回更新后的指令对象。
+
+**请求示例**
+
+```http
+PATCH /v1/default/banks/demo-bank/directives/dir-001
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer bce-v3/ALTAK-xxx/xxx
+Content-Type: application/json
+
+{
+  "tags": ["topic:style", "state:active", "user_id:u-001", "agent_id:agent-001"]
+}
+```
+
+**返回示例**
+
+```json
+{
+  "id": "dir-001",
+  "bank_id": "demo-bank",
+  "name": "scoped-tone",
+  "content": "Use a concise and practical tone.",
+  "tags": ["topic:style", "state:active", "user_id:u-001", "agent_id:agent-001"]
+}
+```
+
+**SDK 方法**
+
+```go
+scope := dumemory.EntityScope{UserID: "u-001", AgentID: "agent-001"}
+req := dumemory.NewUpdateDirectiveRequest()
+req.Tags = []string{"topic:style", "state:active"}
+out, err := client.UpdateDirectiveWithScope(ctx, "demo-bank", "dir-001", scope, *req)
+```
+
+---
+
+### 10.11 作用域列出心智模型 ListMentalModelsWithScope
+
+**接口说明**
+
+按实体作用域列出心智模型。SDK 会把 scope tags 追加到 `ListMentalModelsOptions.Tags`，并默认使用 `all_strict`。
+
+**请求 URI**
+
+```
+GET /v1/default/banks/{bankId}/mental-models?tags={tag}&tags_match={tagsMatch}&detail={detail}&limit={limit}&offset={offset}
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer <API_KEY>
+```
+
+**请求头域**
+
+除公共头域外，无其它特殊头域。
+
+**请求参数**
+
+| 参数名称 | 参数类型 | 是否必须 | 参数位置 | 描述 |
+| --- | --- | --- | --- | --- |
+| bankId | String | 是 | URL 参数 | 记忆库 ID |
+| scope | EntityScope | 是 | SDK 参数 | 至少包含一个实体 ID |
+| tags | Array<String> | 否 | Query 参数 | 业务 tags；SDK 自动追加 scope tags |
+| tags_match | String | 否 | Query 参数 | 默认使用 `all_strict` |
+| detail | String | 否 | Query 参数 | 详情级别 |
+| limit | Integer | 否 | Query 参数 | 分页大小 |
+| offset | Integer | 否 | Query 参数 | 偏移量 |
+
+**返回头域**
+
+除公共头域外，无其它特殊头域。
+
+**返回参数**
+
+同 `ListMentalModels`，包含 `items`。
+
+**请求示例**
+
+```http
+GET /v1/default/banks/demo-bank/mental-models?tags=topic:preference&tags=user_id:u-001&tags=app_id:app-001&tags_match=all_strict&limit=20
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer bce-v3/ALTAK-xxx/xxx
+```
+
+**返回示例**
+
+```json
+{ "items": [] }
+```
+
+**SDK 方法**
+
+```go
+scope := dumemory.EntityScope{UserID: "u-001", AppID: "app-001"}
+out, err := client.ListMentalModelsWithScope(ctx, "demo-bank", scope, dumemory.ListMentalModelsOptions{
+    Tags:  []string{"topic:preference"},
+    Limit: 20,
+})
+```
+
+---
+
+### 10.12 作用域创建心智模型 CreateMentalModelWithScope
+
+**接口说明**
+
+创建心智模型，并自动把实体作用域 tags 追加到请求体 `tags`。
+
+**请求 URI**
+
+```
+POST /v1/default/banks/{bankId}/mental-models
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer <API_KEY>
+Content-Type: application/json
+```
+
+**请求头域**
+
+除公共头域外，无其它特殊头域。
+
+**请求参数**
+
+| 参数名称 | 参数类型 | 是否必须 | 参数位置 | 描述 |
+| --- | --- | --- | --- | --- |
+| bankId | String | 是 | URL 参数 | 记忆库 ID |
+| scope | EntityScope | 是 | SDK 参数 | 至少包含一个实体 ID |
+| name | String | 是 | RequestBody | 心智模型名称 |
+| source_query | String | 是 | RequestBody | 用于生成模型内容的查询语句 |
+| tags | Array<String> | 否 | RequestBody | 业务 tags；SDK 自动追加 scope tags |
+| max_tokens | Integer | 否 | RequestBody | 生成上限 |
+| trigger | Object | 否 | RequestBody | 触发条件 |
+
+**返回头域**
+
+除公共头域外，无其它特殊头域。
+
+**返回参数**
+
+同 `CreateMentalModel`，包含 `mental_model_id`、`operation_id`。
+
+**请求示例**
+
+```http
+POST /v1/default/banks/demo-bank/mental-models
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer bce-v3/ALTAK-xxx/xxx
+Content-Type: application/json
+
+{
+  "name": "User Preference Model",
+  "source_query": "What does this user prefer while working?",
+  "tags": ["topic:preference", "user_id:u-001", "app_id:app-001"]
+}
+```
+
+**返回示例**
+
+```json
+{
+  "mental_model_id": "mm-001",
+  "operation_id": "op-001"
+}
+```
+
+**SDK 方法**
+
+```go
+scope := dumemory.EntityScope{UserID: "u-001", AppID: "app-001"}
+req := dumemory.NewCreateMentalModelRequest("User Preference Model", "What does this user prefer while working?")
+req.Tags = []string{"topic:preference"}
+out, err := client.CreateMentalModelWithScope(ctx, "demo-bank", scope, *req)
+```
+
+---
+
+### 10.13 作用域更新心智模型 UpdateMentalModelWithScope
+
+**接口说明**
+
+更新心智模型，并自动把实体作用域 tags 追加到请求体 `tags`。
+
+**请求 URI**
+
+```
+PATCH /v1/default/banks/{bankId}/mental-models/{modelId}
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer <API_KEY>
+Content-Type: application/json
+```
+
+**请求头域**
+
+除公共头域外，无其它特殊头域。
+
+**请求参数**
+
+| 参数名称 | 参数类型 | 是否必须 | 参数位置 | 描述 |
+| --- | --- | --- | --- | --- |
+| bankId | String | 是 | URL 参数 | 记忆库 ID |
+| modelId | String | 是 | URL 参数 | 心智模型 ID |
+| scope | EntityScope | 是 | SDK 参数 | 至少包含一个实体 ID |
+| name | String | 否 | RequestBody | 新名称 |
+| source_query | String | 否 | RequestBody | 新查询 |
+| max_tokens | Integer | 否 | RequestBody | 生成上限 |
+| tags | Array<String> | 否 | RequestBody | 业务 tags；SDK 自动追加 scope tags |
+| trigger | Object | 否 | RequestBody | 触发条件 |
+
+**返回头域**
+
+除公共头域外，无其它特殊头域。
+
+**返回参数**
+
+同 `UpdateMentalModel`，返回更新后的心智模型对象。
+
+**请求示例**
+
+```http
+PATCH /v1/default/banks/demo-bank/mental-models/mm-001
+Host: cloud.memory.bj.baidubce.com
+Authorization: Bearer bce-v3/ALTAK-xxx/xxx
+Content-Type: application/json
+
+{
+  "tags": ["topic:preference", "state:active", "user_id:u-001", "app_id:app-001"]
+}
+```
+
+**返回示例**
+
+```json
+{
+  "id": "mm-001",
+  "bank_id": "demo-bank",
+  "name": "User Preference Model",
+  "tags": ["topic:preference", "state:active", "user_id:u-001", "app_id:app-001"]
+}
+```
+
+**SDK 方法**
+
+```go
+scope := dumemory.EntityScope{UserID: "u-001", AppID: "app-001"}
+req := dumemory.NewUpdateMentalModelRequest()
+req.Tags = []string{"topic:preference", "state:active"}
+out, err := client.UpdateMentalModelWithScope(ctx, "demo-bank", "mm-001", scope, *req)
 ```
 
 ---

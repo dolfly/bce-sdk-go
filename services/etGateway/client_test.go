@@ -154,6 +154,9 @@ func TestClient_CreateHealthCheck(t *testing.T) {
 	args := &CreateHealthCheckArgs{
 		ClientToken:           getClientToken(),
 		EtGatewayId:           "dcgw-iiyc0ers2qx4",
+		DcphyId:               "dcphy-axwuruqsn6af",
+		ChannelId:             "dedicatedconn-jbxquurmvghc",
+		SubnetId:              "sbn-pmibbccz3g7t",
 		HealthCheckSourceIp:   "1.2.3.4",
 		HealthCheckType:       HEALTH_CHECK_ICMP,
 		HealthCheckPort:       80,

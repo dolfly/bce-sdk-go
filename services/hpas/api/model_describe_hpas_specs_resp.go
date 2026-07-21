@@ -39,4 +39,5 @@ type HpasSpec struct {
 	GpuCardCount        int    `json:"gpuCardCount,omitempty"`
 	EnableJumboFrame    bool   `json:"enableJumboFrame,omitempty"`
 	CdsDataCount        int    `json:"cdsDataCount,omitempty"`
+	NeedEhcClusterId    bool   `json:"needEhcClusterId,omitempty"`
 }

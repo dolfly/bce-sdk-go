@@ -2269,6 +2269,7 @@ type EbcFlavor struct {
 	CpuGHz             string   `json:"cpuGHz"`
 	NetworkBandwidth   string   `json:"networkBandwidth"`
 	NetworkPackage     string   `json:"networkPackage"`
+	EnableJumboFrame   bool     `json:"enableJumboFrame"`
 	NicIpv4Quota       int      `json:"nicIpv4Quota"`
 	NicIpv6Quota       int      `json:"nicIpv6Quota"`
 	EniQuota           int      `json:"eniQuota"`

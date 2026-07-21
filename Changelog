@@ -1,5 +1,17 @@
 发行说明:记录每次SDK更新的说明,最新版本的SDK包含以前所有版本的更新内容。
 ---------------------------------------------------------------------
+【版本:v0.9.272】
+涉及产品：BCC
+    查询实例套餐规格接口返回结果EbcFlavor新增EnableJumboFrame字段
+涉及产品：VPC
+    创建专线网关健康检查接口入参新增DcphyId、ChannelId、SubnetId字段
+涉及产品：DuMemory
+    支持根据作用域记忆隔离
+涉及产品：HPAS
+    查询HPAS套餐列表接口返回新增NeedEhcClusterId字段
+涉及产品：CFW
+    修改指定应用型CFW策略接口修改name和description字段类型，改为*string + omitempty
+    修改指定应用型CFW规则所有非必填字段类型，修改为指针类型 + omitempty
 【版本:v0.9.271】
 涉及产品：CSN
     查询云智能网列表接口新增createdTime字段

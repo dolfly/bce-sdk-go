@@ -186,21 +186,21 @@ type UnbindCfwRequestInstances struct {
 }
 
 type UpdateCfwRequest struct {
-	Name        string `json:"name"`
-	Description string `json:"description"`
+	Name        *string `json:"name,omitempty"`
+	Description *string `json:"description,omitempty"`
 }
 
 type UpdateCfwRuleRequest struct {
-	IpVersion     int32  `json:"ipVersion"`
-	Priority      int32  `json:"priority"`
-	Protocol      string `json:"protocol"`
-	Direction     string `json:"direction"`
-	SourceAddress string `json:"sourceAddress"`
-	DestAddress   string `json:"destAddress"`
-	SourcePort    string `json:"sourcePort"`
-	DestPort      string `json:"destPort"`
-	Action        string `json:"action"`
-	Description   string `json:"description"`
+	IpVersion     *int32  `json:"ipVersion,omitempty"`
+	Priority      *int32  `json:"priority,omitempty"`
+	Protocol      *string `json:"protocol,omitempty"`
+	Direction     *string `json:"direction,omitempty"`
+	SourceAddress *string `json:"sourceAddress,omitempty"`
+	DestAddress   *string `json:"destAddress,omitempty"`
+	SourcePort    *string `json:"sourcePort,omitempty"`
+	DestPort      *string `json:"destPort,omitempty"`
+	Action        *string `json:"action,omitempty"`
+	Description   *string `json:"description,omitempty"`
 }
 
 type ListCfwArgs struct {

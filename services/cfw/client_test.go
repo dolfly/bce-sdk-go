@@ -121,9 +121,11 @@ func TestClient_GetCfw(t *testing.T) {
 }
 
 func TestClient_UpdateCfw(t *testing.T) {
+	name := "cfw_2"
+	description := "desc"
 	args := &UpdateCfwRequest{
-		Name:        "cfw_2",
-		Description: "desc",
+		Name:        &name,
+		Description: &description,
 	}
 	err := CfwClient.UpdateCfw("cfw-xxxxxxxxxxxx", args)
 	ExpectEqual(t.Errorf, nil, err)
@@ -155,16 +157,25 @@ func TestClient_CreateCfwRule(t *testing.T) {
 }
 
 func TestClient_UpdateCfwRule(t *testing.T) {
+	ipVersion := int32(4)
+	priority := int32(2)
+	protocol := "TCP"
+	direction := "in"
+	sourceAddress := "192.168.0.1"
+	destAddress := "192.168.0.2"
+	sourcePort := "80"
+	destPort := "88"
+	action := "allow"
 	args := &UpdateCfwRuleRequest{
-		IpVersion:     4,
-		Priority:      2,
-		Protocol:      "TCP",
-		Direction:     "in",
-		SourceAddress: "192.168.0.1",
-		DestAddress:   "192.168.0.2",
-		SourcePort:    "80",
-		DestPort:      "88",
-		Action:        "allow",
+		IpVersion:     &ipVersion,
+		Priority:      &priority,
+		Protocol:      &protocol,
+		Direction:     &direction,
+		SourceAddress: &sourceAddress,
+		DestAddress:   &destAddress,
+		SourcePort:    &sourcePort,
+		DestPort:      &destPort,
+		Action:        &action,
 	}
 	err := CfwClient.UpdateCfwRule("cfw-xxxxxxxxxxxx", "cfwr-xxxxxxxxxxxx", args)
 	ExpectEqual(t.Errorf, nil, err)
